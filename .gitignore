@@ -6,8 +6,8 @@
 /target/
 /build/
 
-# Java-Kompilierte Dateien
-*.class
+
+# Java-Kompilierte Dateien *.class
 
 # Log-Dateien
 *.log
