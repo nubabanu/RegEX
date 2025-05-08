@@ -2,8 +2,6 @@
 .idea/
 *.iml
 
-.DS_Store
-
 # Build-Ordner
 /target/
 /build/
