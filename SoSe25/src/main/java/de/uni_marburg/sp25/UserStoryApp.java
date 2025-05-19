@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -33,12 +34,12 @@ public class UserStoryApp extends Application {
         languageSelector.getItems().addAll("English", "Deutsch");
         languageSelector.setValue("English");
         Button changeLanguageButton = new Button("Change Language");
-        Button convertButton = new Button("Convert to JSON");
 
         Label label = new Label("Load User Stories from a file:");
         Button loadButton = new Button("Load File");
         Button loadJsonButton = new Button("Load JSON File");
         Button clearButton = new Button("Clear Output");
+
         HBox buttonBox = new HBox(10, loadButton, loadJsonButton, clearButton);
         buttonBox.setSpacing(10);
 
@@ -48,53 +49,31 @@ public class UserStoryApp extends Application {
         outputArea.setPrefWidth(800);
         outputArea.setPrefHeight(400);
 
-        loadButton.setOnAction(event -> {
+        Button convertButton = new Button("Convert to JSON");
+        convertButton.setOnAction(event -> {
             FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Open User Stories File");
+            fileChooser.setTitle("Select TXT File to Convert");
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Files", "*.txt"));
 
-            File file = fileChooser.showOpenDialog(primaryStage);
+            File inputFile = fileChooser.showOpenDialog(primaryStage);
 
-            if (file != null) {
-                try {
-                    List<UserStory> userStories = manager.readUserStories(file.getAbsolutePath());
-                    StringBuilder currentContent = new StringBuilder(outputArea.getText());
-                    currentContent.append("File: ").append(file.getName()).append("\n");
-                    for (UserStory userStory : userStories) {
-                        currentContent.append(userStory.toString()).append("\n");
+            if (inputFile != null) {
+                FileChooser saveChooser = new FileChooser();
+                saveChooser.setTitle("Save Converted JSON File");
+                saveChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
+                File outputFile = saveChooser.showSaveDialog(primaryStage);
+
+                if (outputFile != null) {
+                    try {
+                        List<UserStory> userStories = manager.readUserStories(inputFile.getAbsolutePath());
+                        manager.saveToJson(userStories, outputFile.getAbsolutePath());
+                        showInfo("Conversion Successful", "The file has been successfully converted to JSON.");
+                    } catch (IOException e) {
+                        showError("Error during conversion: " + e.getMessage());
                     }
-                    currentContent.append("\n");
-                    outputArea.setText(currentContent.toString());
-                } catch (IOException e) {
-                    showError("Error reading file: " + file.getName() + " - " + e.getMessage());
                 }
             }
         });
-
-        loadJsonButton.setOnAction(event -> {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Open JSON File");
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
-
-            File file = fileChooser.showOpenDialog(primaryStage);
-
-            if (file != null) {
-                try {
-                    List<UserStory> userStories = manager.readUserStories(file.getAbsolutePath());
-                    StringBuilder currentContent = new StringBuilder(outputArea.getText());
-                    currentContent.append("File: ").append(file.getName()).append("\n");
-                    for (UserStory userStory : userStories) {
-                        currentContent.append(userStory.toString()).append("\n");
-                    }
-                    currentContent.append("\n");
-                    outputArea.setText(currentContent.toString());
-                } catch (IOException e) {
-                    showError("Error reading file: " + file.getName() + " - " + e.getMessage());
-                }
-            }
-        });
-
-        clearButton.setOnAction(event -> outputArea.clear());
 
         changeLanguageButton.setOnAction(event -> {
             String selectedLanguage = languageSelector.getValue();
@@ -123,11 +102,17 @@ public class UserStoryApp extends Application {
 
         HBox languageBox = new HBox(10, languageLabel, languageSelector, changeLanguageButton);
 
-        VBox layout = new VBox(10, menuBar, languageBox, label, buttonBox, outputArea);
-        layout.setSpacing(15);
-        layout.setPadding(new Insets(10));
+        VBox centerLayout = new VBox(10, languageBox, label, buttonBox, outputArea);
+        centerLayout.setSpacing(15);
+        centerLayout.setPadding(new Insets(10));
 
-        Scene scene = new Scene(layout, 800, 600);
+        BorderPane root = new BorderPane();
+        root.setTop(menuBar);
+        root.setCenter(centerLayout);
+        root.setBottom(convertButton);
+        BorderPane.setMargin(convertButton, new Insets(10));
+
+        Scene scene = new Scene(root, 800, 600);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -135,6 +120,14 @@ public class UserStoryApp extends Application {
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showInfo(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
