@@ -23,12 +23,25 @@ public class UserStoryManager {
      */
     public List<UserStory> readUserStories(String filePath) throws IOException {
         List<UserStory> userStories = new ArrayList<>();
-        List<String> lines = Files.readAllLines(Paths.get(filePath));
+        String fileExtension = filePath.substring(filePath.lastIndexOf('.') + 1).toLowerCase();
 
-        for (String line : lines) {
-            if (!line.trim().isEmpty()) {
-                userStories.add(parseUserStory(line));
+        if ("txt".equals(fileExtension)) {
+            // Read each line as a separate user story
+            List<String> lines = Files.readAllLines(Paths.get(filePath));
+            for (String line : lines) {
+                if (!line.trim().isEmpty()) {
+                    UserStory userStory = parseUserStory(line.trim());
+                    if (userStory != null) {
+                        userStories.add(userStory);
+                    }
+                }
             }
+        } else if ("json".equals(fileExtension)) {
+            // Read JSON file
+            ObjectMapper mapper = new ObjectMapper();
+            userStories = mapper.readValue(new File(filePath), mapper.getTypeFactory().constructCollectionType(List.class, UserStory.class));
+        } else {
+            throw new IOException("Unsupported file format: " + fileExtension);
         }
 
         return userStories;
@@ -82,13 +95,14 @@ public class UserStoryManager {
         }
 
         UserStory userStory = new UserStory();
-        userStory.setRole(extractPart(line, "As a", actionStart));
-        userStory.setAction(extractPart(line, actionStart, "so that"));
-        userStory.setTriggers(List.of(extractPart(line, "so that", ".")));
-        userStory.setTargets(extractTargets(line));
-
-        // Generate and set a unique PID
         userStory.setPid("#G" + String.format("%02d", pidCounter++) + "#");
+        userStory.setText(line);
+        userStory.setPersona(List.of(extractPart(line, "As a", actionStart)));
+        userStory.setActionGoal(List.of(extractPart(line, actionStart, "so that")));
+        userStory.setBenefit(extractPart(line, "so that", "."));
+        userStory.setTriggers(List.of(List.of(userStory.getPersona().get(0), userStory.getActionGoal().get(0))));
+        userStory.setTargets(List.of(List.of(userStory.getActionGoal().get(0), "Information")));
+        userStory.setContains(List.of(List.of("Information", "properties")));
 
         return userStory;
     }
