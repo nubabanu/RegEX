@@ -92,6 +92,7 @@
           <source>24</source>
           <target>24</target>
           <release>24</release>
+          <compilerArgs>--enable-preview</compilerArgs>
         </configuration>
       </plugin>
 

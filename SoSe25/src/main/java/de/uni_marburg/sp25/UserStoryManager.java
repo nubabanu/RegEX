@@ -14,6 +14,8 @@ import java.util.List;
  */
 public class UserStoryManager {
 
+    private int pidCounter = 1; // Counter for generating unique PIDs
+
     /**
      * Reads user stories from a file.
      *
@@ -60,25 +62,11 @@ public class UserStoryManager {
     }
 
     /**
-     * Saves a list of annotations to a JSON file.
-     *
-     * @param annotations the list of annotations to save
-     * @param outputPath  the path to the output JSON file
-     * @throws IOException if an I/O error occurs
-     */
-    public void saveAnnotationsToJson(List<String> annotations, String outputPath) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.writerWithDefaultPrettyPrinter().writeValue(new File(outputPath), annotations);
-    }
-
-    /**
      * Parses a single user story from a line of text.
      *
      * @param line the line of text
      * @return the parsed user story
      */
-    private int pidCounter = 1; // Counter for generating unique PIDs
-
     private UserStory parseUserStory(String line) {
         if (!line.trim().endsWith(".")) {
             line += ".";
@@ -98,10 +86,21 @@ public class UserStoryManager {
         userStory.setPid("#G" + String.format("%02d", pidCounter++) + "#");
         userStory.setText(line);
         userStory.setPersona(List.of(extractPart(line, "As a", actionStart)));
-        userStory.setActionGoal(List.of(extractPart(line, actionStart, "so that")));
+
+        UserStory.Action action = new UserStory.Action();
+        action.setGoal(List.of(extractPart(line, actionStart, "so that")));
+        action.setBenefit(List.of("obtain")); // Replace with logic to extract from text if available
+        userStory.setAction(action);
+
+        UserStory.Entity entity = new UserStory.Entity();
+        entity.setGoalEntity(List.of("Information")); // Replace with logic to extract from text if available
+        entity.setBenefitEntity(List.of("properties", "County services")); // Replace with logic to extract from text if available
+        userStory.setEntity(entity);
+
         userStory.setBenefit(extractPart(line, "so that", "."));
-        userStory.setTriggers(List.of(List.of(userStory.getPersona().get(0), userStory.getActionGoal().get(0))));
-        userStory.setTargets(List.of(List.of(userStory.getActionGoal().get(0), "Information")));
+
+        userStory.setTriggers(List.of(List.of(userStory.getPersona().get(0), action.getGoal().get(0))));
+        userStory.setTargets(List.of(List.of(action.getGoal().get(0), "Information")));
         userStory.setContains(List.of(List.of("Information", "properties")));
 
         return userStory;
@@ -116,7 +115,6 @@ public class UserStoryManager {
      * @return the extracted part
      */
     private String extractPart(String line, String start, String end) {
-        // Normalize input for case-insensitive matching
         String lowerLine = line.toLowerCase().trim();
         String lowerStart = start.toLowerCase().trim();
         String lowerEnd = end.toLowerCase().trim();
@@ -130,30 +128,11 @@ public class UserStoryManager {
         startIndex += lowerStart.length();
         int endIndex = lowerLine.indexOf(lowerEnd, startIndex);
 
-        // Fallback: If end delimiter is not found, extract until the end of the line
         if (endIndex == -1) {
             System.err.println("Warning: End delimiter not found. Line: \"" + line + "\", End: \"" + end + "\"");
             return line.substring(startIndex).trim();
         }
 
         return line.substring(startIndex, endIndex).trim();
-    }
-
-    /**
-     * Extracts target references from a user story line.
-     *
-     * @param line the string to extract from
-     * @return a list of target references
-     */
-    private List<String> extractTargets(String line) {
-        String targetPrefix = "Targets:";
-        int targetIndex = line.indexOf(targetPrefix);
-
-        if (targetIndex != -1) {
-            String targetsPart = line.substring(targetIndex + targetPrefix.length()).trim();
-            return List.of(targetsPart.split(","));
-        }
-
-        return new ArrayList<>(); // Return an empty list if no targets are found
     }
 }
