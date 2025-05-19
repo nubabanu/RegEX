@@ -42,3 +42,5 @@ build/
 *.swp
 # Ignoriere automatisch generierte XML-Dateien
 *.xml
+.DS_Store
+target/
