@@ -1,5 +1,7 @@
 package de.uni_marburg.sp25;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
@@ -58,7 +60,23 @@ public class UserStoryManager {
      */
     public void saveToJson(List<UserStory> userStories, String outputPath) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        mapper.writerWithDefaultPrettyPrinter().writeValue(new File(outputPath), userStories);
+        DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter();
+
+        // Customize indentation for objects and arrays
+        prettyPrinter.indentObjectsWith(new DefaultPrettyPrinter.FixedSpaceIndenter() {
+            @Override
+            public void writeIndentation(JsonGenerator g, int level) throws IOException {
+                g.writeRaw("\n" + "    ".repeat(level)); // Add 4 spaces per level
+            }
+        });
+        prettyPrinter.indentArraysWith(new DefaultPrettyPrinter.FixedSpaceIndenter() {
+            @Override
+            public void writeIndentation(JsonGenerator g, int level) throws IOException {
+                g.writeRaw("\n" + "    ".repeat(level)); // Add 4 spaces per level
+            }
+        });
+
+        mapper.writer(prettyPrinter).writeValue(new File(outputPath), userStories);
     }
 
     /**

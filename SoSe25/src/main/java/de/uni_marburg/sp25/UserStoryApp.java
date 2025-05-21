@@ -2,6 +2,7 @@ package de.uni_marburg.sp25;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
@@ -36,83 +37,149 @@ public class UserStoryApp extends Application {
         Button changeLanguageButton = new Button("Change Language");
 
         Label label = new Label("Load User Stories from a file:");
-        Button loadButton = new Button("Load File");
+        Button loadButton = new Button("Load TXT File");
         Button loadJsonButton = new Button("Load JSON File");
         Button clearButton = new Button("Clear Output");
 
         HBox buttonBox = new HBox(10, loadButton, loadJsonButton, clearButton);
         buttonBox.setSpacing(10);
 
-        TextArea outputArea = new TextArea();
-        outputArea.setEditable(false);
-        outputArea.setPromptText("User stories will appear here...");
-        outputArea.setPrefWidth(800);
-        outputArea.setPrefHeight(400);
+        TextArea txtOutputArea = new TextArea();
+        txtOutputArea.setEditable(false);
+        txtOutputArea.setPromptText("TXT User stories will appear here...");
+        txtOutputArea.setPrefWidth(1000);
+        txtOutputArea.setPrefHeight(500);
 
-        Button convertButton = new Button("Convert to JSON");
-        convertButton.setOnAction(event -> {
+        TextArea jsonOutputArea = new TextArea();
+        jsonOutputArea.setEditable(false);
+        jsonOutputArea.setPromptText("JSON User stories will appear here...");
+        jsonOutputArea.setPrefWidth(1000);
+        jsonOutputArea.setPrefHeight(500);
+
+        VBox outputBox = new VBox(10, txtOutputArea, jsonOutputArea);
+        outputBox.setSpacing(15);
+        outputBox.setPadding(new Insets(10));
+
+        loadButton.setOnAction(event -> {
             FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Select TXT File to Convert");
+            fileChooser.setTitle("Select TXT File");
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+            File selectedFile = fileChooser.showOpenDialog(primaryStage);
 
-            File inputFile = fileChooser.showOpenDialog(primaryStage);
-
-            if (inputFile != null) {
-                FileChooser saveChooser = new FileChooser();
-                saveChooser.setTitle("Save Converted JSON File");
-                saveChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
-                File outputFile = saveChooser.showSaveDialog(primaryStage);
-
-                if (outputFile != null) {
-                    try {
-                        List<UserStory> userStories = manager.readUserStories(inputFile.getAbsolutePath());
-                        manager.saveToJson(userStories, outputFile.getAbsolutePath());
-                        showInfo("Conversion Successful", "The file has been successfully converted to JSON.");
-                    } catch (IOException e) {
-                        showError("Error during conversion: " + e.getMessage());
+            if (selectedFile != null) {
+                try {
+                    List<UserStory> userStories = manager.readUserStories(selectedFile.getAbsolutePath());
+                    txtOutputArea.appendText("File: " + selectedFile.getName() + "\n");
+                    for (UserStory story : userStories) {
+                        String[] lines = story.toString().split("\\r?\\n");
+                        for (String line : lines) {
+                            txtOutputArea.appendText(line.trim() + "\n");
+                        }
+                        txtOutputArea.appendText("\n");
                     }
+                } catch (IOException e) {
+                    showError("Error loading TXT file: " + e.getMessage());
                 }
             }
+        });
+
+        loadJsonButton.setOnAction(event -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Select JSON File");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
+            File selectedFile = fileChooser.showOpenDialog(primaryStage);
+
+            if (selectedFile != null) {
+                try {
+                    List<UserStory> userStories = manager.readUserStories(selectedFile.getAbsolutePath());
+                    jsonOutputArea.appendText("File: " + selectedFile.getName() + "\n");
+                    for (UserStory story : userStories) {
+                        String[] lines = story.toString().split("\\r?\\n");
+                        for (String line : lines) {
+                            jsonOutputArea.appendText(line.trim() + "\n");
+                        }
+                        jsonOutputArea.appendText("\n");
+                    }
+                } catch (IOException e) {
+                    showError("Error loading JSON file: " + e.getMessage());
+                }
+            }
+        });
+
+        clearButton.setOnAction(event -> {
+            txtOutputArea.clear();
+            jsonOutputArea.clear();
         });
 
         changeLanguageButton.setOnAction(event -> {
             String selectedLanguage = languageSelector.getValue();
             if ("Deutsch".equals(selectedLanguage)) {
-                primaryStage.setTitle("User Story Manager");
+                primaryStage.setTitle("Benutzerstory-Manager");
                 fileMenu.setText("Datei");
                 exitItem.setText("Beenden");
-                label.setText("Lade User Stories aus einer Datei:");
-                loadButton.setText("Datei laden");
+                label.setText("Lade Benutzerstories aus einer Datei:");
+                loadButton.setText("TXT-Datei laden");
+                loadJsonButton.setText("JSON-Datei laden");
                 clearButton.setText("Ausgabe löschen");
-                outputArea.setPromptText("User Stories werden hier angezeigt...");
-                convertButton.setText("In JSON umwandeln");
+                txtOutputArea.setPromptText("TXT-Benutzerstories werden hier angezeigt...");
+                jsonOutputArea.setPromptText("JSON-Benutzerstories werden hier angezeigt...");
                 changeLanguageButton.setText("Sprache ändern");
             } else {
                 primaryStage.setTitle("User Story Manager");
                 fileMenu.setText("File");
                 exitItem.setText("Exit");
                 label.setText("Load User Stories from a file:");
-                loadButton.setText("Load File");
+                loadButton.setText("Load TXT File");
+                loadJsonButton.setText("Load JSON File");
                 clearButton.setText("Clear Output");
-                outputArea.setPromptText("User stories will appear here...");
-                convertButton.setText("Convert to JSON");
+                txtOutputArea.setPromptText("TXT User stories will appear here...");
+                jsonOutputArea.setPromptText("JSON User stories will appear here...");
                 changeLanguageButton.setText("Change Language");
             }
         });
 
+        Button convertToJsonButton = new Button("Convert to JSON");
+        convertToJsonButton.setOnAction(event -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Select TXT File to Convert");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+            File selectedFile = fileChooser.showOpenDialog(primaryStage);
+
+            if (selectedFile != null) {
+                try {
+                    List<UserStory> userStories = manager.readUserStories(selectedFile.getAbsolutePath());
+                    FileChooser saveFileChooser = new FileChooser();
+                    saveFileChooser.setTitle("Save JSON File");
+                    saveFileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
+                    File saveFile = saveFileChooser.showSaveDialog(primaryStage);
+
+                    if (saveFile != null) {
+                        manager.saveToJson(userStories, saveFile.getAbsolutePath());
+                        showInfo("File successfully converted to JSON and saved.");
+                    }
+                } catch (IOException e) {
+                    showError("Error converting TXT to JSON: " + e.getMessage());
+                }
+            }
+        });
+
+        HBox bottomBox = new HBox(convertToJsonButton);
+        bottomBox.setPadding(new Insets(10));
+        bottomBox.setSpacing(10);
+        bottomBox.setAlignment(Pos.BOTTOM_LEFT);
+
         HBox languageBox = new HBox(10, languageLabel, languageSelector, changeLanguageButton);
 
-        VBox centerLayout = new VBox(10, languageBox, label, buttonBox, outputArea);
+        VBox centerLayout = new VBox(10, languageBox, label, buttonBox, outputBox);
         centerLayout.setSpacing(15);
         centerLayout.setPadding(new Insets(10));
 
         BorderPane root = new BorderPane();
         root.setTop(menuBar);
         root.setCenter(centerLayout);
-        root.setBottom(convertButton);
-        BorderPane.setMargin(convertButton, new Insets(10));
+        root.setBottom(bottomBox);
 
-        Scene scene = new Scene(root, 800, 600);
+        Scene scene = new Scene(root, 1000, 800);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -125,9 +192,9 @@ public class UserStoryApp extends Application {
         alert.showAndWait();
     }
 
-    private void showInfo(String title, String message) {
+    private void showInfo(String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
+        alert.setTitle("Information");
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
