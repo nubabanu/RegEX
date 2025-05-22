@@ -25,7 +25,7 @@ public class UserStoryApp extends Application {
     private UserStoryManager manager = new UserStoryManager();
     private TextArea txtOutputArea = new TextArea();
     private TextArea jsonOutputArea = new TextArea();
-    // private Label appTitleLabel; // Removed as it was unused, stage title is set directly
+    private TextArea warningsArea = new TextArea();
     private Menu fileMenu;
     private MenuItem exitItem;
     private Label loadFileLabel;
@@ -37,6 +37,7 @@ public class UserStoryApp extends Application {
     private ComboBox<String> languageSelector;
     private Label languageLabelText;
     private Button changeLanguageButton;
+    private Label warningsLabel;
 
     private ResourceBundle messages;
 
@@ -91,13 +92,25 @@ public class UserStoryApp extends Application {
         jsonOutputArea.setPromptText(messages.getString("prompt.jsonOutputArea"));
         jsonOutputArea.setPrefHeight(300);
 
-        VBox outputDisplayBox = new VBox(10, new Label(messages.getString("label.txtContent")), txtOutputArea, new Label(messages.getString("label.jsonContent")), jsonOutputArea);
+        // New warnings area
+        warningsLabel = new Label(messages.getString("label.warnings"));
+        warningsArea = new TextArea();
+        warningsArea.setEditable(false);
+        warningsArea.setPromptText(messages.getString("prompt.warningsArea"));
+        warningsArea.setPrefHeight(100);
+        warningsArea.getStyleClass().add("warnings-area");
+
+        VBox outputDisplayBox = new VBox(10, 
+            new Label(messages.getString("label.txtContent")), txtOutputArea, 
+            new Label(messages.getString("label.jsonContent")), jsonOutputArea,
+            warningsLabel, warningsArea);
 
         loadTxtButton.setOnAction(_event -> loadFile(primaryStage, "txt")); // Use _event
         loadJsonButton.setOnAction(_event -> loadFile(primaryStage, "json")); // Use _event
         clearButton.setOnAction(_event -> { // Use _event
             txtOutputArea.clear();
             jsonOutputArea.clear();
+            warningsArea.clear();
         });
         convertToJsonButton.setOnAction(_event -> convertTxtToJson(primaryStage)); // Use _event
         saveJsonButton.setOnAction(_event -> saveJsonToFile(primaryStage)); // Use _event
@@ -126,6 +139,11 @@ public class UserStoryApp extends Application {
 
         if (selectedFile != null) {
             try {
+                // Update manager with current locale
+                manager.loadResourceBundle(messages.getLocale());
+                // Clear warnings area
+                warningsArea.clear();
+                
                 List<UserStory> userStories = manager.readUserStories(selectedFile.getAbsolutePath());
                 TextArea targetArea = type.equals("txt") ? txtOutputArea : jsonOutputArea;
                 targetArea.clear();
@@ -135,6 +153,22 @@ public class UserStoryApp extends Application {
                 }
                 if (type.equals("txt")) {
                     displayUserStoriesAsJson(userStories, selectedFile.getName());
+                }
+                
+                // Display any parsing warnings
+                List<String> warnings = manager.getParsingWarnings();
+                if (!warnings.isEmpty()) {
+                    for (String warning : warnings) {
+                        warningsArea.appendText(warning + "\n");
+                    }
+                    
+                    // Show the warnings section
+                    warningsLabel.setVisible(true);
+                    warningsArea.setVisible(true);
+                } else {
+                    // Hide the warnings section if no warnings
+                    warningsLabel.setVisible(false);
+                    warningsArea.setVisible(false);
                 }
             } catch (IOException e) {
                 showError(messages.getString("error.loadingFile") + ": " + e.getMessage());
@@ -225,6 +259,8 @@ public class UserStoryApp extends Application {
         saveJsonButton.setText(messages.getString("button.saveJson"));
         txtOutputArea.setPromptText(messages.getString("prompt.txtOutputArea"));
         jsonOutputArea.setPromptText(messages.getString("prompt.jsonOutputArea"));
+        warningsArea.setPromptText(messages.getString("prompt.warningsArea"));
+        warningsLabel.setText(messages.getString("label.warnings"));
 
         // Safely update labels for output areas by checking parent and children types
         if (txtOutputArea.getParent() instanceof VBox) {
@@ -234,6 +270,9 @@ public class UserStoryApp extends Application {
             }
             if (parentVBox.getChildren().size() > 2 && parentVBox.getChildren().get(2) instanceof Label) {
                  ((Label) parentVBox.getChildren().get(2)).setText(messages.getString("label.jsonContent"));
+            }
+            if (parentVBox.getChildren().size() > 4 && parentVBox.getChildren().get(4) instanceof Label) {
+                 ((Label) parentVBox.getChildren().get(4)).setText(messages.getString("label.warnings"));
             }
         }
     }

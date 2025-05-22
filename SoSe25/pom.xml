@@ -15,6 +15,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>24</maven.compiler.source>
     <maven.compiler.target>24</maven.compiler.target>
+    <maven.compiler.release>24</maven.compiler.release>
   </properties>
 
   <dependencies>
@@ -83,16 +84,32 @@
       </resource>
     </resources>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-toolchains-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>toolchain</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <toolchains>
+            <jdk>
+              <version>24</version>
+            </jdk>
+          </toolchains>
+        </configuration>
+      </plugin>
       <!-- Maven Compiler Plugin -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
         <configuration>
-          <source>24</source>
-          <target>24</target>
-          <release>24</release>
-          <compilerArgs>--enable-preview</compilerArgs>
+          <!-- Configuration will be inherited from properties -->
         </configuration>
       </plugin>
 

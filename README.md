@@ -1,6 +1,62 @@
 # SP25_Gruppe6_fshaye_geilmann_manafov
 
+## Development Setup
 
+This project requires Java 24 and Maven. Follow these steps to set up your development environment:
+
+### 1. Install JDK 24
+
+*   Download and install JDK 24. You can find installers for your operating system from sources like:
+    *   [Oracle JDK](https://www.oracle.com/java/technologies/downloads/)
+    *   [Adoptium Temurin](https://adoptium.net/temurin/releases/?version=24)
+    *   [OpenJDK builds](https://jdk.java.net/24/)
+*   Ensure that JDK 24 is correctly installed and that the `JAVA_HOME` environment variable is set, or that the JDK's `bin` directory is in your system's `PATH`.
+
+### 2. Configure Maven Toolchains
+
+Maven needs to know where your JDK 24 installation is located. This is done using a `toolchains.xml` file.
+
+*   **Locate your Maven settings directory:**
+    *   macOS/Linux: `~/.m2/`
+    *   Windows: `%USERPROFILE%\\.m2\\` (e.g., `C:\\Users\\YourUsername\\.m2\\`)
+
+*   **Create or edit `toolchains.xml`:**
+    If the file doesn't exist, create it. Add the following content, replacing `/path/to/your/jdk-24` with the actual installation path of your JDK 24.
+
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <toolchains>
+      <toolchain>
+        <type>jdk</type>
+        <provides>
+          <version>24</version>
+        </provides>
+        <configuration>
+          <jdkHome>/path/to/your/jdk-24</jdkHome>
+        </configuration>
+      </toolchain>
+    </toolchains>
+    ```
+
+*   **Finding your JDK 24 installation path (`jdkHome`):**
+    *   **macOS:** Typically, JDKs are installed in `/Library/Java/JavaVirtualMachines/`. For JDK 24, the path might look like `/Library/Java/JavaVirtualMachines/jdk-24.jdk/Contents/Home`. You can often find it by running `/usr/libexec/java_home -v 24` in the terminal.
+    *   **Linux:** Paths vary depending on the installation method (e.g., package manager, manual download). Common locations include `/usr/lib/jvm/`, `/opt/jdk/`, or a user-specific directory. Use commands like `update-alternatives --config java` (Debian/Ubuntu) or check where your package manager installed it.
+    *   **Windows:** Typically, JDKs are installed in `C:\\Program Files\\Java\\` or `C:\\Program Files (x86)\\Java\\`. The path might look like `C:\\Program Files\\Java\\jdk-24`.
+
+### 3. Build and Run the Project
+
+Once JDK 24 is installed and `toolchains.xml` is configured, you can build and run the project using Maven:
+
+1.  Navigate to the project's root directory (where `pom.xml` is located, i.e., `SoSe25` in this repository).
+    ```bash
+    cd SoSe25
+    ```
+2.  Clean and run the JavaFX application:
+    ```bash
+    mvn clean javafx:run
+    ```
+
+This setup ensures that Maven uses JDK 24 for compiling and running the project, as specified in the `pom.xml`.
 
 ## Getting started
 

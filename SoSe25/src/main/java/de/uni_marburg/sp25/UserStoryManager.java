@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,12 +22,31 @@ import java.util.regex.Pattern;
 public class UserStoryManager {
 
     private int pidCounter = 1; // Counter for generating unique PIDs
+    private List<String> parsingWarnings = new ArrayList<>();
+    private ResourceBundle messages;
 
     /**
      * Constructor that initializes or resets the PID counter
      */
     public UserStoryManager() {
         resetPidCounter();
+        // Default to English messages
+        loadResourceBundle(Locale.ENGLISH);
+    }
+    
+    /**
+     * Constructor with specific locale
+     */
+    public UserStoryManager(Locale locale) {
+        resetPidCounter();
+        loadResourceBundle(locale);
+    }
+    
+    /**
+     * Loads the appropriate resource bundle for the specified locale
+     */
+    public void loadResourceBundle(Locale locale) {
+        this.messages = ResourceBundle.getBundle("de.uni_marburg.sp25.messages", locale);
     }
 
     /**
@@ -33,6 +54,20 @@ public class UserStoryManager {
      */
     public void resetPidCounter() {
         this.pidCounter = 1;
+    }
+    
+    /**
+     * Clears all parsing warnings
+     */
+    public void clearParsingWarnings() {
+        this.parsingWarnings.clear();
+    }
+    
+    /**
+     * Returns the list of parsing warnings
+     */
+    public List<String> getParsingWarnings() {
+        return new ArrayList<>(parsingWarnings); // Return a copy for safety
     }
 
     /**
@@ -45,6 +80,8 @@ public class UserStoryManager {
     public List<UserStory> readUserStories(String filePath) throws IOException {
         // Reset PID counter for consistent behavior - each file starts with G01
         resetPidCounter();
+        // Clear previous warnings
+        clearParsingWarnings();
         
         List<UserStory> userStories = new ArrayList<>();
         String fileExtension = getFileExtension(filePath);
@@ -158,7 +195,10 @@ public class UserStoryManager {
 
             return userStory;
         } else {
-            System.err.println("Warning: Could not parse user story. Line: \"" + processedLine + "\"");
+            // Add warning to the list with internationalized message
+            String warningMessage = String.format(messages.getString("warning.parseUserStory"), processedLine);
+            parsingWarnings.add(warningMessage);
+            
             // Create a UserStory object with minimal information if parsing fails but text is present
             UserStory partiallyParsedStory = new UserStory();
             partiallyParsedStory.setPid(generatePid());
