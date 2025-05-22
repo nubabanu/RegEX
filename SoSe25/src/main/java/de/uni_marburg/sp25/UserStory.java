@@ -16,11 +16,18 @@ public class UserStory {
     @JsonProperty("Persona")
     private List<String> persona;
 
-    @JsonProperty("Action")
-    private Action action;
+    // Changed to match the JSON structure described in the Anforderungsbeschreibung
+    @JsonProperty("Action.Goal")
+    private List<String> actionGoal;
 
-    @JsonProperty("Entity")
-    private Entity entity;
+    @JsonProperty("Action.Benefit")
+    private List<String> actionBenefit;
+
+    @JsonProperty("Entity.Goal")
+    private List<String> entityGoal;
+
+    @JsonProperty("Entity.Benefit")
+    private List<String> entityBenefit;
 
     @JsonProperty("Benefit")
     private String benefit;
@@ -34,35 +41,19 @@ public class UserStory {
     @JsonProperty("Contains")
     private List<List<String>> contains;
 
-    // Nested Action class
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Action {
-        @JsonProperty("Goal")
-        private List<String> goal;
+    // Getters and setters for the new fields
+    public List<String> getActionGoal() { return actionGoal; }
+    public void setActionGoal(List<String> actionGoal) { this.actionGoal = actionGoal; }
+    public List<String> getActionBenefit() { return actionBenefit; }
+    public void setActionBenefit(List<String> actionBenefit) { this.actionBenefit = actionBenefit; }
+    public List<String> getEntityGoal() { return entityGoal; }
+    public void setEntityGoal(List<String> entityGoal) { this.entityGoal = entityGoal; }
+    public List<String> getEntityBenefit() { return entityBenefit; }
+    public void setEntityBenefit(List<String> entityBenefit) { this.entityBenefit = entityBenefit; }
 
-        @JsonProperty("Benefit")
-        private List<String> benefit;
 
-        public List<String> getGoal() { return goal; }
-        public void setGoal(List<String> goal) { this.goal = goal; }
-        public List<String> getBenefit() { return benefit; }
-        public void setBenefit(List<String> benefit) { this.benefit = benefit; }
-    }
-
-    // Nested Entity class
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Entity {
-        @JsonProperty("Goal Entity")
-        private List<String> goalEntity;
-
-        @JsonProperty("Benefit Entity")
-        private List<String> benefitEntity;
-
-        public List<String> getGoalEntity() { return goalEntity; }
-        public void setGoalEntity(List<String> goalEntity) { this.goalEntity = goalEntity; }
-        public List<String> getBenefitEntity() { return benefitEntity; }
-        public void setBenefitEntity(List<String> benefitEntity) { this.benefitEntity = benefitEntity; }
-    }
+    // Removed nested Action and Entity classes as the Anforderungsbeschreibung specifies a flat structure for these within the JSON.
+    // The fields are now directly part of the UserStory class.
 
     public String getPid() { return pid; }
     public void setPid(String pid) { this.pid = pid; }
@@ -70,10 +61,6 @@ public class UserStory {
     public void setText(String text) { this.text = text; }
     public List<String> getPersona() { return persona; }
     public void setPersona(List<String> persona) { this.persona = persona; }
-    public Action getAction() { return action; }
-    public void setAction(Action action) { this.action = action; }
-    public Entity getEntity() { return entity; }
-    public void setEntity(Entity entity) { this.entity = entity; }
     public String getBenefit() { return benefit; }
     public void setBenefit(String benefit) { this.benefit = benefit; }
     public List<List<String>> getTriggers() { return triggers; }
@@ -85,18 +72,19 @@ public class UserStory {
 
     @Override
     public String toString() {
+        // Updated toString to reflect the changes in fields and match the specified JSON output format.
         return "{" +
-                "\"PID\": \"" + pid + "\"," +
-                "\"Text\": \"" + text + "\"," +
-                "\"Persona\": " + (persona != null ? persona.toString() : "[]") + "," +
-                "\"Action\": {\"Goal\": " + (action != null && action.getGoal() != null ? action.getGoal().toString() : "[]") +
-                ", \"Benefit\": " + (action != null && action.getBenefit() != null ? action.getBenefit().toString() : "[]") + "}," +
-                "\"Entity\": {\"Goal Entity\": " + (entity != null && entity.getGoalEntity() != null ? entity.getGoalEntity().toString() : "[]") +
-                ", \"Benefit Entity\": " + (entity != null && entity.getBenefitEntity() != null ? entity.getBenefitEntity().toString() : "[]") + "}," +
-                "\"Benefit\": \"" + benefit + "\"," +
-                "\"Triggers\": " + (triggers != null ? triggers.toString() : "[]") + "," +
-                "\"Targets\": " + (targets != null ? targets.toString() : "[]") + "," +
-                "\"Contains\": " + (contains != null ? contains.toString() : "[]") +
+                "\\\"PID\\\": \\\"" + pid + "\\\"," +
+                "\\\"Text\\\": \\\"" + text + "\\\"," +
+                "\\\"Persona\\\": " + (persona != null ? persona.toString() : "[]") + "," +
+                "\\\"Action.Goal\\\": " + (actionGoal != null ? actionGoal.toString() : "[]") + "," +
+                "\\\"Action.Benefit\\\": " + (actionBenefit != null ? actionBenefit.toString() : "[]") + "," +
+                "\\\"Entity.Goal\\\": " + (entityGoal != null ? entityGoal.toString() : "[]") + "," +
+                "\\\"Entity.Benefit\\\": " + (entityBenefit != null ? entityBenefit.toString() : "[]") + "," +
+                "\\\"Benefit\\\": \\\"" + benefit + "\\\"," +
+                "\\\"Triggers\\\": " + (triggers != null ? triggers.toString() : "[]") + "," +
+                "\\\"Targets\\\": " + (targets != null ? targets.toString() : "[]") + "," +
+                "\\\"Contains\\\": " + (contains != null ? contains.toString() : "[]") +
                 "}";
     }
 }
