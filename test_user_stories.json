@@ -1,0 +1,61 @@
+[ {
+  "PID" : "#G01#",
+  "Text" : "As a User, I want to log in to the system, so that I can access my personalized content.",
+  "Persona" : [ "User" ],
+  "Action.Goal" : [ "log" ],
+  "Action.Benefit" : [ "access" ],
+  "Entity.Goal" : [ "system" ],
+  "Entity.Benefit" : [ "my", "personalized", "content" ],
+  "Benefit" : "I can access my personalized content",
+  "Triggers" : [ [ "User", "log" ] ],
+  "Targets" : [ [ "log", "system" ] ],
+  "Contains" : [ ]
+}, {
+  "PID" : "#G02#",
+  "Text" : "As an Administrator, I want to manage user accounts, so that I can ensure system security.",
+  "Persona" : [ "Administrator" ],
+  "Action.Goal" : [ "manage" ],
+  "Action.Benefit" : [ "ensure" ],
+  "Entity.Goal" : [ "user", "accounts" ],
+  "Entity.Benefit" : [ "system", "security" ],
+  "Benefit" : "I can ensure system security",
+  "Triggers" : [ [ "Administrator", "manage" ] ],
+  "Targets" : [ [ "manage", "user" ] ],
+  "Contains" : [ ]
+}, {
+  "PID" : "#G03#",
+  "Text" : "As a Customer, I want to view product details, so that I can make an informed purchase decision.",
+  "Persona" : [ "Customer" ],
+  "Action.Goal" : [ "view" ],
+  "Action.Benefit" : [ "make" ],
+  "Entity.Goal" : [ "product", "details" ],
+  "Entity.Benefit" : [ "informed", "purchase", "decision" ],
+  "Benefit" : "I can make an informed purchase decision",
+  "Triggers" : [ [ "Customer", "view" ] ],
+  "Targets" : [ [ "view", "product" ] ],
+  "Contains" : [ ]
+}, {
+  "PID" : "#G04#",
+  "Text" : "As a Content Creator, I want to publish new articles.",
+  "Persona" : [ "Content Creator" ],
+  "Action.Goal" : [ "publish" ],
+  "Action.Benefit" : [ ],
+  "Entity.Goal" : [ "new", "articles" ],
+  "Entity.Benefit" : [ ],
+  "Benefit" : "",
+  "Triggers" : [ [ "Content Creator", "publish" ] ],
+  "Targets" : [ [ "publish", "new" ] ],
+  "Contains" : [ ]
+}, {
+  "PID" : "#G05#",
+  "Text" : "As a Data Analyst, I want to generate reports, so that I can track key metrics.",
+  "Persona" : [ "Data Analyst" ],
+  "Action.Goal" : [ "generate" ],
+  "Action.Benefit" : [ "track" ],
+  "Entity.Goal" : [ "reports" ],
+  "Entity.Benefit" : [ "key", "metrics" ],
+  "Benefit" : "I can track key metrics",
+  "Triggers" : [ [ "Data Analyst", "generate" ] ],
+  "Targets" : [ [ "generate", "reports" ] ],
+  "Contains" : [ ]
+} ]

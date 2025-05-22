@@ -1,0 +1,5 @@
+As a User, I want to log in to the system, so that I can access my personalized content.
+As an Administrator, I want to manage user accounts, so that I can ensure system security.
+As a Customer, I want to view product details, so that I can make an informed purchase decision.
+As a Content Creator, I want to publish new articles.
+As a Data Analyst, I want to generate reports, so that I can track key metrics.

@@ -55,6 +55,8 @@ Once JDK 24 is installed and `toolchains.xml` is configured, you can build and r
     ```bash
     mvn clean javafx:run
     ```
+I run like this 
+cd /Users/zuhalsicim/sp25_gruppe6_fshaye_geilmann_manafov/SoSe25 && mvn clean javafx:run
 
 This setup ensures that Maven uses JDK 24 for compiling and running the project, as specified in the `pom.xml`.
 
