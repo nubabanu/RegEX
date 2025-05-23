@@ -14,6 +14,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Pane; // Added for GraphStream
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -34,6 +35,8 @@ public class UserStoryApp extends Application {
     private TextArea jsonOutputArea = new TextArea();
     private TextArea warningsArea = new TextArea();
     private TextArea qualityResultsArea = new TextArea();
+    // private TextArea graphVisualizationArea = new TextArea(); // Replaced by Pane
+    private Pane graphVisualizationPane; // Added for GraphStream
     private Menu fileMenu;
     private MenuItem exitItem;
     private Label loadFileLabel;
@@ -48,6 +51,13 @@ public class UserStoryApp extends Application {
     private Label warningsLabel;
     private TabPane tabPane; // Added field
     private VBox qualityCriteriaBox; // Moved declaration here
+    private HBox graphButtonBox; // Added field for graph button HBox
+    
+    // Graph visualization components
+    private Label graphVisualizationLabel;
+    private Button showGraphButton;
+    private ListView<UserStory> graphUserStoriesListView; // Added for graph tab story selection
+    private Label graphUserStoriesLabel;
     
     // Quality analysis components
     private Label qualityAnalysisLabel;
@@ -101,7 +111,7 @@ public class UserStoryApp extends Application {
         MenuBar menuBar = new MenuBar();
         fileMenu = new Menu(messages.getString("menu.file"));
         exitItem = new MenuItem(messages.getString("menu.file.exit"));
-        exitItem.setOnAction(_e -> primaryStage.close());
+        exitItem.setOnAction(_ -> primaryStage.close());
         fileMenu.getItems().add(exitItem);
         menuBar.getMenus().add(fileMenu);
 
@@ -112,7 +122,7 @@ public class UserStoryApp extends Application {
 
         // changeLanguageButton = new Button(messages.getString("button.changeLanguage")); // Moved up
         changeLanguageButton.setText(messages.getString("button.changeLanguage")); // Set text now
-        changeLanguageButton.setOnAction(_event -> {
+        changeLanguageButton.setOnAction(_ -> {
             updateUIText(this.primaryStage, languageSelector.getValue()); // Pass this.primaryStage
         });
 
@@ -189,11 +199,72 @@ public class UserStoryApp extends Application {
         warningsArea.setEditable(false);
         warningsArea.setPromptText(messages.getString("prompt.warningsArea"));
         warningsArea.setPrefHeight(80);
+        
+        // Graph visualization area
+        graphVisualizationLabel = new Label(messages.getString("label.graphVisualization"));
+        graphVisualizationLabel.setId("graphVisualizationLabel");
+        
+        // User story selection for graph visualization
+        graphUserStoriesLabel = new Label(messages.getString("label.selectGraphStory"));
+        graphUserStoriesLabel.setId("graphUserStoriesLabel");
+        graphUserStoriesListView = new ListView<>();
+        graphUserStoriesListView.setId("graphUserStoriesListView");
+        graphUserStoriesListView.setPrefHeight(150);
+        graphUserStoriesListView.setPrefWidth(400);
+        graphUserStoriesListView.setCellFactory(listView -> new ListCell<UserStory>() {
+            @Override
+            protected void updateItem(UserStory item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    // Ensure PID is not null before using it
+                    String pidText = item.getPid() != null ? item.getPid() + ": " : "";
+                    setText(pidText + item.getText());
+                }
+            }
+        });
+        
+        // graphVisualizationArea = new TextArea(); // Old TextArea
+        // graphVisualizationArea.setEditable(false);
+        // graphVisualizationArea.setPromptText(messages.getString("prompt.graphVisualizationArea"));
+        // graphVisualizationArea.setPrefHeight(200);
+        // graphVisualizationArea.setId("graphVisualizationArea");
+
+        // New Pane for GraphStream
+        graphVisualizationPane = new Pane();
+        graphVisualizationPane.setPrefHeight(400); // Increased height for better graph display
+        graphVisualizationPane.setId("graphVisualizationPane");
+        graphVisualizationPane.setStyle("-fx-border-color: lightgrey;"); // Optional: add a border
+
+        showGraphButton = new Button(messages.getString("button.showGraph"));
+        showGraphButton.setId("showGraphButton");
+        
+        HBox graphButtonBox = new HBox(10, showGraphButton);
+        graphButtonBox.setPadding(new Insets(5,0,5,0));
+        this.graphButtonBox = graphButtonBox; // Assign to class field
+        
+        VBox graphVisualizationBox = new VBox(5, 
+            graphUserStoriesLabel,
+            graphUserStoriesListView,
+            graphButtonBox,
+            // graphVisualizationArea // Old TextArea
+            graphVisualizationPane // New Pane
+        );
 
         VBox outputDisplayBox = new VBox(10, 
             new Label(messages.getString("label.txtContent")), txtOutputArea, 
             new Label(messages.getString("label.jsonContent")), jsonOutputArea,
-            warningsLabel, warningsArea);
+            warningsLabel, warningsArea,
+            graphVisualizationLabel, graphVisualizationBox);
+
+        // Initially hide the graph visualization area
+        graphVisualizationLabel.setVisible(false);
+        graphUserStoriesLabel.setVisible(false);
+        graphUserStoriesListView.setVisible(false);
+        graphButtonBox.setVisible(false);
+        // graphVisualizationArea.setVisible(false); // Old TextArea
+        graphVisualizationPane.setVisible(false); // New Pane
 
         return new VBox(10, loadFileLabel, fileOperationsBox, outputDisplayBox);
     }
@@ -286,21 +357,150 @@ public class UserStoryApp extends Application {
     }
 
     private void setupEventHandlers(Stage primaryStage) {
-        loadTxtButton.setOnAction(_event -> loadFile(primaryStage, "txt"));
-        loadJsonButton.setOnAction(_event -> loadFile(primaryStage, "json"));
-        clearButton.setOnAction(_event -> {
+        loadTxtButton.setOnAction(_ -> loadFile(primaryStage, "txt"));
+        loadJsonButton.setOnAction(_ -> loadFile(primaryStage, "json"));
+        clearButton.setOnAction(_ -> {
             txtOutputArea.clear();
             jsonOutputArea.clear();
             warningsArea.clear();
+            // graphVisualizationArea.clear(); // Old TextArea
+            if (graphVisualizationPane.getChildren().size() > 0 && graphVisualizationPane.getChildren().get(0) instanceof org.graphstream.ui.fx_viewer.FxViewPanel) {
+                // If a GraphStream view is present, properly close it to release resources
+                org.graphstream.ui.fx_viewer.FxViewPanel viewPanel = (org.graphstream.ui.fx_viewer.FxViewPanel) graphVisualizationPane.getChildren().get(0);
+                if (viewPanel.getViewer() != null) {
+                    viewPanel.getViewer().close();
+                }
+            }
+            graphVisualizationPane.getChildren().clear(); // Clear the pane
             qualityResultsArea.clear();
             userStoriesListView.getItems().clear();
+            graphUserStoriesListView.getItems().clear();
             currentUserStories.clear();
         });
-        convertToJsonButton.setOnAction(_event -> convertTxtToJson(primaryStage));
-        saveJsonButton.setOnAction(_event -> saveJsonToFile(primaryStage));
+        convertToJsonButton.setOnAction(_ -> convertTxtToJson(primaryStage));
+        saveJsonButton.setOnAction(_ -> saveJsonToFile(primaryStage));
         
-        analyzeQualityButton.setOnAction(_event -> performQualityAnalysis());
-        exportReportButton.setOnAction(_event -> exportQualityReport(primaryStage));
+        showGraphButton.setOnAction(_ -> displayGraphVisualization());
+        
+        analyzeQualityButton.setOnAction(_ -> performQualityAnalysis());
+        exportReportButton.setOnAction(_ -> exportQualityReport(primaryStage));
+    }
+    
+    /**
+     * Displays the graph visualization for the selected user story
+     */
+    private void displayGraphVisualization() {
+        if (graphUserStoriesListView.getSelectionModel().getSelectedItem() == null) {
+            showError(messages.getString("error.noUserStorySelected"));
+            return;
+        }
+        
+        UserStory selectedStory = graphUserStoriesListView.getSelectionModel().getSelectedItem();
+        String pid = selectedStory.getPid();
+        
+        AnnotationGraph annotationGraph = manager.getAnnotationGraph(pid);
+        
+        if (annotationGraph == null) {
+            annotationGraph = manager.generateGraphForUserStory(selectedStory);
+        }
+        
+        if (annotationGraph == null) {
+            showError("Could not generate or find graph for the selected story.");
+            return;
+        }
+
+        org.graphstream.graph.Graph gsGraph = new org.graphstream.graph.implementations.SingleGraph("storyGraph-" + pid + System.currentTimeMillis(), false, true); // Added timestamp for uniqueness
+        System.setProperty("org.graphstream.ui", "javafx");
+
+        String stylesheet = 
+            "node { " +
+            "   size: 20px, 20px; " +
+            "   fill-color: #ADD8E6; " + 
+            "   text-size: 12px; " +
+            "   text-alignment: at-right; " +
+            "   text-offset: 5px, 0px; " +
+            "   stroke-mode: plain; " +
+            "   stroke-color: #00008B; " + 
+            "} " +
+            "edge { " +
+            "   fill-color: #808080; " + 
+            "   text-size: 10px; " +
+            "   arrow-size: 8px, 5px; " +
+            "} " +
+            "node.ROLE { fill-color: #FFD700; } " + 
+            "node.GOAL_ACTION { fill-color: #90EE90; } " + 
+            "node.GOAL_ENTITY { fill-color: #90EE90; } " +
+            "node.BENEFIT_ACTION { fill-color: #FFA07A; } " + 
+            "node.BENEFIT_ENTITY { fill-color: #FFA07A; } ";
+        gsGraph.setAttribute("ui.stylesheet", stylesheet);
+        gsGraph.setAttribute("ui.quality");
+        gsGraph.setAttribute("ui.antialias");
+
+        if (annotationGraph.getNodes() != null) {
+            for (de.uni_marburg.sp25.Node appNode : annotationGraph.getNodes()) {
+                if (appNode != null && appNode.getLabel() != null) { // Use getLabel() for ID
+                    String nodeId = appNode.getLabel();
+                    if (gsGraph.getNode(nodeId) == null) { // Avoid duplicate nodes if labels aren't unique (though they should be)
+                        org.graphstream.graph.Node gsNode = gsGraph.addNode(nodeId);
+                        // Use getLabel() for name and getType() for class
+                        gsNode.setAttribute("ui.label", appNode.getLabel() + " [" + appNode.getType().toString() + "]");
+                        gsNode.setAttribute("ui.class", appNode.getType().toString()); 
+                    }
+                } else {
+                    System.err.println("Skipping null node or node with null label.");
+                }
+            }
+        }
+
+        if (annotationGraph.getEdges() != null) {
+            int edgeCounter = 0; // Counter for unique edge IDs
+            for (de.uni_marburg.sp25.Edge appEdge : annotationGraph.getEdges()) {
+                if (appEdge != null && appEdge.getSource() != null && appEdge.getTarget() != null &&
+                    appEdge.getSource().getLabel() != null && appEdge.getTarget().getLabel() != null) {
+                    
+                    String sourceNodeId = appEdge.getSource().getLabel();
+                    String targetNodeId = appEdge.getTarget().getLabel();
+                    
+                    // Ensure source and target nodes exist in the GraphStream graph
+                    if (gsGraph.getNode(sourceNodeId) != null && gsGraph.getNode(targetNodeId) != null) {
+                        String edgeId = sourceNodeId + "->" + targetNodeId + "_" + appEdge.getType().toString() + "_" + edgeCounter++; // Generate unique edge ID
+                        // Check if an edge with this ID already exists (optional, but good for complex graphs)
+                        if (gsGraph.getEdge(edgeId) == null) {
+                           org.graphstream.graph.Edge gsEdge = gsGraph.addEdge(edgeId, sourceNodeId, targetNodeId, true); // true for directed edge
+                           gsEdge.setAttribute("ui.label", appEdge.getType().toString());
+                        } else {
+                            System.err.println("Skipping duplicate edge ID: " + edgeId);
+                        }
+                    } else {
+                        System.err.println("Skipping edge due to missing source/target node in gsGraph. Source: " + sourceNodeId + ", Target: " + targetNodeId);
+                    }
+                } else {
+                    System.err.println("Skipping null edge, or edge with null source/target node or labels.");
+                }
+            }
+        }
+
+        org.graphstream.ui.fx_viewer.FxViewer viewer = new org.graphstream.ui.fx_viewer.FxViewer(gsGraph, org.graphstream.ui.fx_viewer.FxViewer.ThreadingModel.GRAPH_IN_GUI_THREAD);
+        viewer.enableAutoLayout(); // Enable auto layout
+        org.graphstream.ui.fx_viewer.FxViewPanel viewPanel = (org.graphstream.ui.fx_viewer.FxViewPanel)viewer.addDefaultView(false); // false for JavaFX panel
+        
+        // Clear previous graph and add the new one
+        if (graphVisualizationPane.getChildren().size() > 0 && graphVisualizationPane.getChildren().get(0) instanceof org.graphstream.ui.fx_viewer.FxViewPanel) {
+            org.graphstream.ui.fx_viewer.FxViewPanel oldViewPanel = (org.graphstream.ui.fx_viewer.FxViewPanel) graphVisualizationPane.getChildren().get(0);
+            if (oldViewPanel.getViewer() != null) {
+                 oldViewPanel.getViewer().close(); // Properly close the old viewer
+            }
+        }
+        graphVisualizationPane.getChildren().clear();
+        graphVisualizationPane.getChildren().add(viewPanel);
+
+        // Make the graph visualization area visible
+        graphVisualizationLabel.setVisible(true);
+        graphUserStoriesLabel.setVisible(true);
+        graphUserStoriesListView.setVisible(true);
+        this.graphButtonBox.setVisible(true); 
+        // graphVisualizationArea.setVisible(true); // Old TextArea
+        graphVisualizationPane.setVisible(true); // New Pane
     }
 
     private void loadFile(Stage ownerStage, String type) {
@@ -328,6 +528,14 @@ public class UserStoryApp extends Application {
             manager.loadResourceBundle(messages.getLocale());
             
             warningsArea.clear(); // UI update
+            // graphVisualizationArea.clear(); // Old TextArea
+            if (graphVisualizationPane.getChildren().size() > 0 && graphVisualizationPane.getChildren().get(0) instanceof org.graphstream.ui.fx_viewer.FxViewPanel) {
+                org.graphstream.ui.fx_viewer.FxViewPanel viewPanel = (org.graphstream.ui.fx_viewer.FxViewPanel) graphVisualizationPane.getChildren().get(0);
+                if (viewPanel.getViewer() != null) {
+                    viewPanel.getViewer().close();
+                }
+            }
+            graphVisualizationPane.getChildren().clear(); // Clear the pane on new file load
 
             List<UserStory> userStories = manager.readUserStories(selectedFile.getAbsolutePath());
             currentUserStories = userStories;
@@ -335,6 +543,7 @@ public class UserStoryApp extends Application {
 
             // Update quality analysis tab with loaded stories
             updateUserStoriesListView(); // UI update
+            updateGraphUserStoriesListView(); // Update graph user stories list view
 
             TextArea targetArea = type.equals("txt") ? txtOutputArea : jsonOutputArea;
             targetArea.clear();
@@ -377,19 +586,24 @@ public class UserStoryApp extends Application {
                 displayUserStoriesAsJson(userStories, selectedFile.getName());
             }
 
-            List<String> warnings = manager.getParsingWarnings();
-            // Platform.runLater(() -> { // Remove Platform.runLater wrapper
-                if (!warnings.isEmpty()) {
-                    for (String warning : warnings) {
-                        warningsArea.appendText(warning + "\n");
-                    }
-                    warningsLabel.setVisible(true);
-                    warningsArea.setVisible(true);
-                } else {
-                    warningsLabel.setVisible(false);
-                    warningsArea.setVisible(false);
-                }
-            // });
+            // Check if this is an annotated JSON file
+            if (type.equals("json") && !manager.getAnnotationGraphs().isEmpty()) {
+                // Show the graph visualization area
+                graphVisualizationLabel.setVisible(true);
+                graphUserStoriesLabel.setVisible(true);
+                graphUserStoriesListView.setVisible(true);
+                this.graphButtonBox.setVisible(true);
+                // graphVisualizationArea remains hidden until a graph is shown
+            } else {
+                // Hide them if no stories are loaded
+                graphVisualizationLabel.setVisible(false);
+                graphUserStoriesLabel.setVisible(false);
+                graphUserStoriesListView.setVisible(false);
+                this.graphButtonBox.setVisible(false);
+                // graphVisualizationArea.setVisible(false); // Also hide the text area
+                graphVisualizationPane.setVisible(false);
+            }
+
         } catch (IOException e) {
             showError(messages.getString("error.loadingFile") + ": " + e.getMessage());
         }
@@ -398,6 +612,14 @@ public class UserStoryApp extends Application {
     private void updateUserStoriesListView() {
         userStoriesListView.getItems().clear();
         userStoriesListView.getItems().addAll(currentUserStories);
+    }
+
+    /**
+     * Updates the user stories list in the graph visualization area
+     */
+    private void updateGraphUserStoriesListView() {
+        graphUserStoriesListView.getItems().clear();
+        graphUserStoriesListView.getItems().addAll(currentUserStories);
     }
 
     private void displayUserStoriesAsJson(List<UserStory> userStories, String originalFileName) {

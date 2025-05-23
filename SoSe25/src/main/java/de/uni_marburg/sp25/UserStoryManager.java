@@ -8,14 +8,17 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,8 +30,10 @@ public class UserStoryManager {
     private int pidCounter = 1; // Counter for generating unique PIDs
     private List<String> parsingWarnings = new ArrayList<>();
     private ResourceBundle messages;
+    private AnnotationGraphManager graphManager;
+    private Map<String, AnnotationGraph> annotationGraphs = new HashMap<>();
 
-    // Updated STOP_WORDS list
+   
     private static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList(
         "a", "an", "the", "to", "for", "in", "on", "at", "by", "with", "from", "as",
         "is", "am", "are", "was", "were", "be", "been", "being",
@@ -46,6 +51,7 @@ public class UserStoryManager {
         // pidCounter is initialized to 1 by default.
         // resetPidCounter(); // No longer needed here, done in readUserStories or explicitly
         loadResourceBundle(Locale.ENGLISH);
+        this.graphManager = new AnnotationGraphManager(messages);
     }
     
     /**
@@ -55,6 +61,7 @@ public class UserStoryManager {
         // pidCounter is initialized to 1 by default.
         // resetPidCounter(); // No longer needed here
         loadResourceBundle(locale);
+        this.graphManager = new AnnotationGraphManager(messages);
     }
     
     /**
@@ -62,6 +69,10 @@ public class UserStoryManager {
      */
     public void loadResourceBundle(Locale locale) {
         this.messages = ResourceBundle.getBundle("de.uni_marburg.sp25.messages", locale);
+        if (this.graphManager != null) {
+            // Update the graph manager's messages if it already exists
+            this.graphManager = new AnnotationGraphManager(messages);
+        }
     }
 
     /**
@@ -112,16 +123,89 @@ public class UserStoryManager {
                 }
             }
         } else if ("json".equals(fileExtension)) {
-            ObjectMapper mapper = new ObjectMapper();
-            userStories = mapper.readValue(new File(filePath), new TypeReference<List<UserStory>>() {});
-            // For JSON, PIDs are read from the file, so pidCounter state after this is less critical
-            // unless we immediately switch to parsing TXT without a reset.
-            // However, tests usually create fresh managers or call readUserStories on a single file.
+            // Try to determine if this is an annotated JSON or a regular JSON
+            if (isAnnotatedJson(filePath)) {
+                // Process as annotated JSON
+                annotationGraphs = graphManager.importAnnotatedJson(Paths.get(filePath));
+                
+                // Add any validation warnings from the graph manager
+                List<String> validationWarnings = graphManager.getValidationWarnings();
+                if (!validationWarnings.isEmpty()) {
+                    parsingWarnings.addAll(validationWarnings);
+                }
+                
+                // If there are no graphs, there might have been validation errors
+                if (annotationGraphs.isEmpty() && !validationWarnings.isEmpty()) {
+                    throw new IOException("Failed to import annotated JSON due to validation errors: " + validationWarnings);
+                }
+                
+                // Convert the graphs to user stories for compatibility with the rest of the application
+                userStories = readUserStoriesFromOriginalJson(filePath);
+            } else {
+                // Process as regular JSON
+                ObjectMapper mapper = new ObjectMapper();
+                userStories = mapper.readValue(new File(filePath), new TypeReference<List<UserStory>>() {});
+                // For JSON, PIDs are read from the file, so pidCounter state after this is less critical
+                // unless we immediately switch to parsing TXT without a reset.
+                // However, tests usually create fresh managers or call readUserStories on a single file.
+            }
         } else {
             throw new IOException("Unsupported file format: " + fileExtension + ". Please use .txt or .json files.");
         }
 
         return userStories;
+    }
+    
+    /**
+     * Determines if a JSON file is an annotated JSON file.
+     * 
+     * @param filePath the path to the JSON file
+     * @return true if the file is an annotated JSON file, false otherwise
+     */
+    private boolean isAnnotatedJson(String filePath) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        File file = new File(filePath);
+        
+        if (!file.exists() || file.length() == 0) {
+            return false;
+        }
+        
+        try {
+            // Read the first object in the array to check if it has the necessary fields
+            List<Map<String, Object>> stories = mapper.readValue(file, new TypeReference<List<Map<String, Object>>>() {});
+            
+            if (stories.isEmpty()) {
+                return false;
+            }
+            
+            Map<String, Object> firstStory = stories.get(0);
+            
+            // Check for specific fields that indicate an annotated JSON
+            boolean hasAnnotationFields = firstStory.containsKey("Persona") && 
+                                        firstStory.containsKey("Action.Goal") && 
+                                        firstStory.containsKey("Entity.Goal") && 
+                                        firstStory.containsKey("Triggers") && 
+                                        firstStory.containsKey("Targets") && 
+                                        firstStory.containsKey("Contains");
+            
+            return hasAnnotationFields;
+        } catch (Exception e) {
+            // If there's an error, assume it's not an annotated JSON
+            return false;
+        }
+    }
+    
+    /**
+     * Reads user stories from the original JSON file instead of the graph representation.
+     * This is needed to preserve the original text and benefit fields.
+     * 
+     * @param filePath the path to the JSON file
+     * @return a list of user stories
+     * @throws IOException if an I/O error occurs
+     */
+    private List<UserStory> readUserStoriesFromOriginalJson(String filePath) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(new File(filePath), new TypeReference<List<UserStory>>() {});
     }
 
     /**
@@ -669,5 +753,159 @@ public class UserStoryManager {
         }
         
         return result;
+    }
+    
+    /**
+     * Gets the annotation graphs for the currently loaded user stories.
+     * 
+     * @return a map of PIDs to annotation graphs
+     */
+    public Map<String, AnnotationGraph> getAnnotationGraphs() {
+        return new HashMap<>(annotationGraphs);
+    }
+    
+    /**
+     * Gets the annotation graph for a specific user story.
+     * 
+     * @param pid the PID of the user story
+     * @return the annotation graph, or null if not found
+     */
+    public AnnotationGraph getAnnotationGraph(String pid) {
+        return annotationGraphs.get(pid);
+    }
+    
+    /**
+     * Generate an annotation graph for a user story.
+     * This is useful for user stories that were parsed from text rather than loaded from annotated JSON.
+     * 
+     * @param userStory the user story to generate a graph for
+     * @return the generated annotation graph
+     */
+    public AnnotationGraph generateGraphForUserStory(UserStory userStory) {
+        AnnotationGraph graph = new AnnotationGraph();
+        
+        // Create nodes for all elements
+        
+        // Persona nodes
+        if (userStory.getPersona() != null) {
+            for (String persona : userStory.getPersona()) {
+                graph.addNode(new Node(persona, Node.Type.ROLE));
+            }
+        }
+        
+        // Action.Goal nodes
+        if (userStory.getActionGoal() != null) {
+            for (String action : userStory.getActionGoal()) {
+                graph.addNode(new Node(action, Node.Type.GOAL_ACTION));
+            }
+        }
+        
+        // Entity.Goal nodes
+        if (userStory.getEntityGoal() != null) {
+            for (String entity : userStory.getEntityGoal()) {
+                graph.addNode(new Node(entity, Node.Type.GOAL_ENTITY));
+            }
+        }
+        
+        // Action.Benefit nodes
+        if (userStory.getActionBenefit() != null) {
+            for (String action : userStory.getActionBenefit()) {
+                graph.addNode(new Node(action, Node.Type.BENEFIT_ACTION));
+            }
+        }
+        
+        // Entity.Benefit nodes
+        if (userStory.getEntityBenefit() != null) {
+            for (String entity : userStory.getEntityBenefit()) {
+                graph.addNode(new Node(entity, Node.Type.BENEFIT_ENTITY));
+            }
+        }
+        
+        // Create edges for all relationships
+        
+        // Triggers edges
+        if (userStory.getTriggers() != null) {
+            for (List<String> trigger : userStory.getTriggers()) {
+                if (trigger.size() == 2) {
+                    String sourceLabel = trigger.get(0);
+                    String targetLabel = trigger.get(1);
+                    
+                    Node source = graph.findNode(sourceLabel, Node.Type.ROLE);
+                    Node target = graph.findNode(targetLabel, Node.Type.GOAL_ACTION);
+                    
+                    if (source != null && target != null) {
+                        graph.addEdge(new Edge(source, target, Edge.Type.TRIGGER));
+                    }
+                }
+            }
+        }
+        
+        // Targets edges
+        if (userStory.getTargets() != null) {
+            for (List<String> target : userStory.getTargets()) {
+                if (target.size() == 2) {
+                    String sourceLabel = target.get(0);
+                    String targetLabel = target.get(1);
+                    
+                    // Check if it's a goal action -> goal entity
+                    Node source = graph.findNode(sourceLabel, Node.Type.GOAL_ACTION);
+                    Node target1 = graph.findNode(targetLabel, Node.Type.GOAL_ENTITY);
+                    
+                    if (source != null && target1 != null) {
+                        graph.addEdge(new Edge(source, target1, Edge.Type.TARGET));
+                    } else {
+                        // Check if it's a benefit action -> benefit entity
+                        source = graph.findNode(sourceLabel, Node.Type.BENEFIT_ACTION);
+                        target1 = graph.findNode(targetLabel, Node.Type.BENEFIT_ENTITY);
+                        
+                        if (source != null && target1 != null) {
+                            graph.addEdge(new Edge(source, target1, Edge.Type.TARGET));
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Contains edges
+        if (userStory.getContains() != null) {
+            for (List<String> contains : userStory.getContains()) {
+                if (contains.size() == 2) {
+                    String sourceLabel = contains.get(0);
+                    String targetLabel = contains.get(1);
+                    
+                    // Find source and target nodes - they could be goal entities, benefit entities, or a mix
+                    Node source = graph.findNode(sourceLabel, Node.Type.GOAL_ENTITY);
+                    if (source == null) {
+                        source = graph.findNode(sourceLabel, Node.Type.BENEFIT_ENTITY);
+                    }
+                    
+                    Node target = graph.findNode(targetLabel, Node.Type.GOAL_ENTITY);
+                    if (target == null) {
+                        target = graph.findNode(targetLabel, Node.Type.BENEFIT_ENTITY);
+                    }
+                    
+                    if (source != null && target != null) {
+                        graph.addEdge(new Edge(source, target, Edge.Type.CONTAINS));
+                    }
+                }
+            }
+        }
+        
+        return graph;
+    }
+    
+    /**
+     * Generate annotation graphs for all user stories and store them.
+     * This is useful for user stories that were parsed from text rather than loaded from annotated JSON.
+     * 
+     * @param userStories the user stories to generate graphs for
+     */
+    public void generateGraphsForUserStories(List<UserStory> userStories) {
+        annotationGraphs.clear();
+        
+        for (UserStory userStory : userStories) {
+            AnnotationGraph graph = generateGraphForUserStory(userStory);
+            annotationGraphs.put(userStory.getPid(), graph);
+        }
     }
 }

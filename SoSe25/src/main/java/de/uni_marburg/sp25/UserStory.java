@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-@JsonIgnoreProperties(ignoreUnknown = true) // Ignore unknown fields in JSON
+@JsonIgnoreProperties(ignoreUnknown = true) 
 public class UserStory {
     @JsonProperty("PID")
     private String pid;
@@ -16,7 +16,6 @@ public class UserStory {
     @JsonProperty("Persona")
     private List<String> persona;
 
-    // Changed to match the JSON structure described in the Anforderungsbeschreibung
     @JsonProperty("Action.Goal")
     private List<String> actionGoal;
 
