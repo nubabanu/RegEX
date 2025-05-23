@@ -13,7 +13,7 @@ import java.util.ResourceBundle;
 public class AtomicityAnalyzer extends QualityCriterion {
 
     private static final List<String> CONJUNCTION_WORDS = Arrays.asList(
-        "and", "or", "then", "also", "additionally", "furthermore", "moreover"
+        "and", "or", "then", "also", "additionally", "furthermore", "moreover", "but" // Added "but"
     );
 
     public AtomicityAnalyzer(ResourceBundle messages) {
@@ -26,10 +26,12 @@ public class AtomicityAnalyzer extends QualityCriterion {
 
         for (UserStory story : userStories) {
             if (!isAtomic(story)) {
+                // Check if a problem for this specific criterion but for a different story (if stories are grouped by problem type)
+                // For atomicity, each non-atomic story is its own problem instance.
                 problems.add(new QualityProblem(
                     criterionName,
                     messages.getString("quality.problem.notAtomic"),
-                    List.of(story),
+                    List.of(story), // Each problem instance is tied to the specific non-atomic story
                     "NOT_ATOMIC"
                 ));
             }
@@ -39,50 +41,68 @@ public class AtomicityAnalyzer extends QualityCriterion {
     }
 
     private boolean isAtomic(UserStory story) {
-        String text = story.getText().toLowerCase();
-        
-        // Check for conjunction words that might indicate multiple actions
-        for (String conjunction : CONJUNCTION_WORDS) {
-            if (text.contains(" " + conjunction + " ")) {
-                return false;
+        // Check 1: Based on parsed actionGoal list from UserStory object
+        // This assumes UserStory.java correctly parses multiple actions into this list.
+        if (story.getActionGoal() != null && story.getActionGoal().size() > 1) {
+            return false; 
+        }
+
+        String lowerCaseText = story.getText().toLowerCase();
+
+        // Check 2: Textual analysis of the goal part for conjunctions
+        String goalPart = extractGoalPart(lowerCaseText);
+        if (goalPart != null) {
+            for (String conjunction : CONJUNCTION_WORDS) {
+                if (goalPart.contains(" " + conjunction + " ")) {
+                    return false;
+                }
             }
         }
 
-        // Check if there are multiple actions in the goal
-        if (story.getActionGoal() != null && story.getActionGoal().size() > 1) {
-            return false;
-        }
-
-        // Check for multiple verbs in the text (simplified approach)
-        String goalPart = extractGoalPart(text);
-        if (goalPart != null && hasMultipleActions(goalPart)) {
-            return false;
+        // Check 3: Textual analysis of the benefit part for conjunctions
+        String benefitPart = extractBenefitPart(lowerCaseText);
+        if (benefitPart != null) {
+            for (String conjunction : CONJUNCTION_WORDS) {
+                if (benefitPart.contains(" " + conjunction + " ")) {
+                    return false;
+                }
+            }
         }
 
         return true;
     }
 
-    private String extractGoalPart(String text) {
-        int wantIndex = text.indexOf("i want");
-        if (wantIndex == -1) return null;
-        
-        int soThatIndex = text.indexOf("so that");
-        int endIndex = soThatIndex != -1 ? soThatIndex : text.length();
-        
-        return text.substring(wantIndex + 6, endIndex).trim();
-    }
+    private String extractGoalPart(String lowerCaseText) {
+        int wantIndex = lowerCaseText.indexOf("i want ");
+        int startIndex = -1;
 
-    private boolean hasMultipleActions(String goalText) {
-        // Simple heuristic: count action verbs
-        String[] commonVerbs = {"create", "edit", "delete", "view", "search", "update", "add", "remove", "modify", "generate", "send", "receive"};
-        int verbCount = 0;
-        
-        for (String verb : commonVerbs) {
-            if (goalText.contains(verb)) {
-                verbCount++;
+        if (wantIndex != -1) {
+            startIndex = wantIndex + "i want ".length();
+        } else {
+            wantIndex = lowerCaseText.indexOf("i want to ");
+            if (wantIndex != -1) {
+                startIndex = wantIndex + "i want to ".length();
+            } else {
+                return null; // No "I want" or "I want to" found
             }
         }
         
-        return verbCount > 1;
+        int soThatIndex = lowerCaseText.indexOf(" so that ", startIndex);
+        int endIndex = soThatIndex != -1 ? soThatIndex : lowerCaseText.length();
+        
+        return lowerCaseText.substring(startIndex, endIndex).trim();
     }
+
+    private String extractBenefitPart(String lowerCaseText) {
+        int soThatIndex = lowerCaseText.indexOf("so that ");
+        if (soThatIndex == -1) {
+            return null; // No "so that" found
+        }
+        // Ensure "so that " is not part of the goal if goal also contains "so that"
+        // This is generally handled by extractGoalPart's endIndex.
+        // Benefit starts after "so that ".
+        return lowerCaseText.substring(soThatIndex + "so that ".length()).trim();
+    }
+
+    
 }

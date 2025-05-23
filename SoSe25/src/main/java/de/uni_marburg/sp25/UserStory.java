@@ -41,6 +41,44 @@ public class UserStory {
     @JsonProperty("Contains")
     private List<List<String>> contains;
 
+    // Default constructor for Jackson
+    public UserStory() {
+    }
+
+    // Constructor used in tests
+    public UserStory(String pid, String text, int i, int j, int k, String role) {
+        this.pid = pid;
+        this.text = text;
+        this.persona = List.of(role); 
+        // Basic initialization for actionGoal and benefit for testing purposes.
+        // Tests for specific analyzers might need to override these.
+        if (text != null && !text.isBlank()) {
+            if (text.toLowerCase().contains("i want to")) {
+                this.actionGoal = List.of(text.substring(text.toLowerCase().indexOf("i want to") + "i want to".length()).trim().split(",")[0].trim());
+            } else {
+                this.actionGoal = List.of("default goal"); // Default if pattern not found
+            }
+            if (text.toLowerCase().contains("so that i can")) { // More specific pattern
+                this.benefit = text.substring(text.toLowerCase().indexOf("so that i can") + "so that i can".length()).trim();
+            } else if (text.toLowerCase().contains("so that")) { // Original fallback
+                this.benefit = text.substring(text.toLowerCase().indexOf("so that") + "so that".length()).trim();
+            } else {
+                this.benefit = "default benefit"; // Default if pattern not found
+            }
+            // Initialize actionBenefit and entityBenefit to avoid nulls, can be refined
+            this.actionBenefit = List.of("default action benefit");
+            this.entityBenefit = List.of("default entity benefit");
+            this.entityGoal = List.of("default entity goal");
+
+        } else {
+            this.actionGoal = List.of();
+            this.benefit = "";
+            this.actionBenefit = List.of();
+            this.entityBenefit = List.of();
+            this.entityGoal = List.of();
+        }
+    }
+
     // Getters and setters for the new fields
     public List<String> getActionGoal() { return actionGoal; }
     public void setActionGoal(List<String> actionGoal) { this.actionGoal = actionGoal; }
@@ -69,6 +107,29 @@ public class UserStory {
     public void setTargets(List<List<String>> targets) { this.targets = targets; }
     public List<List<String>> getContains() { return contains; }
     public void setContains(List<List<String>> contains) { this.contains = contains; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserStory userStory = (UserStory) o;
+        return java.util.Objects.equals(pid, userStory.pid) &&
+               java.util.Objects.equals(text, userStory.text) &&
+               java.util.Objects.equals(persona, userStory.persona) &&
+               java.util.Objects.equals(actionGoal, userStory.actionGoal) &&
+               java.util.Objects.equals(actionBenefit, userStory.actionBenefit) &&
+               java.util.Objects.equals(entityGoal, userStory.entityGoal) &&
+               java.util.Objects.equals(entityBenefit, userStory.entityBenefit) &&
+               java.util.Objects.equals(benefit, userStory.benefit) &&
+               java.util.Objects.equals(triggers, userStory.triggers) &&
+               java.util.Objects.equals(targets, userStory.targets) &&
+               java.util.Objects.equals(contains, userStory.contains);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(pid, text, persona, actionGoal, actionBenefit, entityGoal, entityBenefit, benefit, triggers, targets, contains);
+    }
 
     @Override
     public String toString() {

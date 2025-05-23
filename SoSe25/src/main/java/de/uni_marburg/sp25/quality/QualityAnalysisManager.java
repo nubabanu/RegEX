@@ -2,7 +2,6 @@ package de.uni_marburg.sp25.quality;
 
 import de.uni_marburg.sp25.UserStory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +19,11 @@ public class QualityAnalysisManager {
         initializeCriteria();
     }
 
+    public void setMessages(ResourceBundle messages) {
+        this.messages = messages;
+        initializeCriteria(); // Re-initialize criteria with new messages
+    }
+
     private void initializeCriteria() {
         availableCriteria = new HashMap<>();
         availableCriteria.put("wellFormedness", new WellFormednessAnalyzer(messages));
@@ -34,6 +38,10 @@ public class QualityAnalysisManager {
 
     public List<String> getAvailableCriteriaNames() {
         return new ArrayList<>(availableCriteria.keySet());
+    }
+
+    public Map<String, QualityCriterion> getAvailableCriteria() { // Added getter
+        return availableCriteria;
     }
 
     public String getCriterionDisplayName(String criterionKey) {
@@ -86,7 +94,7 @@ public class QualityAnalysisManager {
         StringBuilder report = new StringBuilder();
         
         report.append("Quality Report\n");
-        report.append("• User Stories: \"").append(fileName).append("\"\n");
+        report.append("• User Stories: \"").append(fileName).append("\"\n"); // Corrected: single backslash for quote
         report.append("• Total Stories Analyzed: ").append(result.getAnalyzedStories().size()).append("\n");
         report.append("• Perfect Stories: ").append(result.getPerfectStories()).append("\n");
         report.append("• Total Problems Found: ").append(result.getTotalProblems()).append("\n\n");
@@ -95,7 +103,7 @@ public class QualityAnalysisManager {
             String criterionKey = entry.getKey();
             List<QualityProblem> problems = entry.getValue();
             
-            report.append("• Quality criterion: \"").append(getCriterionDisplayName(criterionKey)).append("\"\n");
+            report.append("• Quality criterion: \"").append(getCriterionDisplayName(criterionKey)).append("\"\n"); // Corrected
             report.append("  - Number of quality problems: ").append(problems.size()).append("\n");
             
             if (!problems.isEmpty()) {
@@ -103,9 +111,9 @@ public class QualityAnalysisManager {
                 for (QualityProblem problem : problems) {
                     report.append("    * Quality problem\n");
                     for (UserStory story : problem.getAffectedStories()) {
-                        report.append("      · User Story: \"").append(story.getText()).append("\"\n");
+                        report.append("      · User Story: \"").append(story.getText()).append("\"\n"); // Corrected
                     }
-                    report.append("      · Problem: \"").append(problem.getProblemDescription()).append("\"\n");
+                    report.append("      · Problem: \"").append(problem.getProblemDescription()).append("\"\n"); // Corrected
                 }
             }
             report.append("\n");
@@ -119,7 +127,7 @@ public class QualityAnalysisManager {
      */
     public void saveResultsToJson(QualityAnalysisResult result, String filePath) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        // mapper.enable(SerializationFeature.INDENT_OUTPUT); // Temporarily disabled for testing
         mapper.writeValue(new File(filePath), result);
     }
 }

@@ -1,0 +1,377 @@
+[
+  {
+    "PID": "US01",
+    "Text": "As a Visitor, I want to view a list of news items, so that I stay up to date.",
+    "Persona": [
+      "Visitor"
+    ],
+    "Action.Goal": [
+      "view"
+    ],
+    "Action.Benefit": [
+      "I"
+    ],
+    "Entity.Goal": [
+      "a list of news items"
+    ],
+    "Entity.Benefit": [
+      "stay up to date"
+    ],
+    "Benefit": "I stay up to date",
+    "Triggers": [
+      [
+        "Visitor",
+        "view"
+      ]
+    ],
+    "Targets": [
+      [
+        "view",
+        "a list of news items"
+      ]
+    ],
+    "Contains": [
+      [
+        "a list of news items",
+        "stay up to date"
+      ]
+    ]
+  },
+  {
+    "PID": "US02",
+    "Text": "As a Visitor, I want to see a list of news items, so that I stay up to date.",
+    "Persona": [
+      "Visitor"
+    ],
+    "Action.Goal": [
+      "see"
+    ],
+    "Action.Benefit": [
+      "I"
+    ],
+    "Entity.Goal": [
+      "a list of news items"
+    ],
+    "Entity.Benefit": [
+      "stay up to date"
+    ],
+    "Benefit": "I stay up to date",
+    "Triggers": [
+      [
+        "Visitor",
+        "see"
+      ]
+    ],
+    "Targets": [
+      [
+        "see",
+        "a list of news items"
+      ]
+    ],
+    "Contains": [
+      [
+        "a list of news items",
+        "stay up to date"
+      ]
+    ]
+  },
+  {
+    "PID": "US03",
+    "Text": "As an Administrator, I want to create a new user account, so that I can manage the users of the system.",
+    "Persona": [],
+    "Action.Goal": [],
+    "Action.Benefit": [],
+    "Entity.Goal": [],
+    "Entity.Benefit": [],
+    "Benefit": "",
+    "Triggers": [],
+    "Targets": [],
+    "Contains": []
+  },
+  {
+    "PID": "US04",
+    "Text": "As an Administrator, I want to edit the permission rights of a user account, so that I can manage the users of the system.",
+    "Persona": [],
+    "Action.Goal": [],
+    "Action.Benefit": [],
+    "Entity.Goal": [],
+    "Entity.Benefit": [],
+    "Benefit": "",
+    "Triggers": [],
+    "Targets": [],
+    "Contains": []
+  },
+  {
+    "PID": "US05",
+    "Text": "As a User, I want to add a product to my cart, so that I can purchase it later.",
+    "Persona": [
+      "User"
+    ],
+    "Action.Goal": [
+      "add"
+    ],
+    "Action.Benefit": [
+      "I"
+    ],
+    "Entity.Goal": [
+      "a product to my cart"
+    ],
+    "Entity.Benefit": [
+      "can purchase it later"
+    ],
+    "Benefit": "I can purchase it later",
+    "Triggers": [
+      [
+        "User",
+        "add"
+      ]
+    ],
+    "Targets": [
+      [
+        "add",
+        "a product to my cart"
+      ]
+    ],
+    "Contains": [
+      [
+        "a product to my cart",
+        "can purchase it later"
+      ]
+    ]
+  },
+  {
+    "PID": "US06",
+    "Text": "Send an email when a contact form is submitted.",
+    "Persona": [],
+    "Action.Goal": [],
+    "Action.Benefit": [],
+    "Entity.Goal": [],
+    "Entity.Benefit": [],
+    "Benefit": "",
+    "Triggers": [],
+    "Targets": [],
+    "Contains": []
+  },
+  {
+    "PID": "US07",
+    "Text": "As a Data Manager, I want to sort and filter the results, so that I can easily review them.",
+    "Persona": [
+      "Data Manager"
+    ],
+    "Action.Goal": [
+      "sort"
+    ],
+    "Action.Benefit": [
+      "I"
+    ],
+    "Entity.Goal": [
+      "and filter the results"
+    ],
+    "Entity.Benefit": [
+      "can easily review them"
+    ],
+    "Benefit": "I can easily review them",
+    "Triggers": [
+      [
+        "Data Manager",
+        "sort"
+      ]
+    ],
+    "Targets": [
+      [
+        "sort",
+        "and filter the results"
+      ]
+    ],
+    "Contains": [
+      [
+        "and filter the results",
+        "can easily review them"
+      ]
+    ]
+  },
+  {
+    "PID": "US08",
+    "Text": "As an Administrator, I receive an email notification when a new user is registered.",
+    "Persona": [],
+    "Action.Goal": [],
+    "Action.Benefit": [],
+    "Entity.Goal": [],
+    "Entity.Benefit": [],
+    "Benefit": "",
+    "Triggers": [],
+    "Targets": [],
+    "Contains": []
+  },
+  {
+    "PID": "US09",
+    "Text": "As a Care Professional, I want to see the registered hours of this week (split into products and activities). See: Mockup from Alice NOTE—first create the overview screen—then add validations.",
+    "Persona": [
+      "Care Professional"
+    ],
+    "Action.Goal": [
+      "see"
+    ],
+    "Action.Benefit": [],
+    "Entity.Goal": [
+      "the registered hours of this week (split into products and activities)"
+    ],
+    "Entity.Benefit": [],
+    "Benefit": "",
+    "Triggers": [
+      [
+        "Care Professional",
+        "see"
+      ]
+    ],
+    "Targets": [
+      [
+        "see",
+        "the registered hours of this week (split into products and activities)"
+      ]
+    ],
+    "Contains": []
+  },
+  {
+    "PID": "US10",
+    "Text": "As a Power User, I want to export reports.",
+    "Persona": [
+      "Power User"
+    ],
+    "Action.Goal": [
+      "export"
+    ],
+    "Action.Benefit": [],
+    "Entity.Goal": [
+      "reports"
+    ],
+    "Entity.Benefit": [],
+    "Benefit": "",
+    "Triggers": [
+      [
+        "Power User",
+        "export"
+      ]
+    ],
+    "Targets": [
+      [
+        "export",
+        "reports"
+      ]
+    ],
+    "Contains": []
+  },
+  {
+    "PID": "US11",
+    "Text": "As an Admin, I want to finalize orders.",
+    "Persona": [],
+    "Action.Goal": [],
+    "Action.Benefit": [],
+    "Entity.Goal": [],
+    "Entity.Benefit": [],
+    "Benefit": "",
+    "Triggers": [],
+    "Targets": [],
+    "Contains": []
+  },
+  {
+    "PID": "US12",
+    "Text": "As an Admin, I want to generate invoices only after orders are finalized, so that accounting is consistent.",
+    "Persona": [],
+    "Action.Goal": [],
+    "Action.Benefit": [],
+    "Entity.Goal": [],
+    "Entity.Benefit": [],
+    "Benefit": "",
+    "Triggers": [],
+    "Targets": [],
+    "Contains": []
+  },
+  {
+    "PID": "US13",
+    "Text": "As a User, I am able to edit any landmark.",
+    "Persona": [
+      "User"
+    ],
+    "Action.Goal": [
+      "edit"
+    ],
+    "Action.Benefit": [],
+    "Entity.Goal": [
+      "any landmark"
+    ],
+    "Entity.Benefit": [],
+    "Benefit": "",
+    "Triggers": [
+      [
+        "User",
+        "edit"
+      ]
+    ],
+    "Targets": [
+      [
+        "edit",
+        "any landmark"
+      ]
+    ],
+    "Contains": []
+  },
+  {
+    "PID": "US14",
+    "Text": "As a User, I am able to delete only the landmarks that I added.",
+    "Persona": [
+      "User"
+    ],
+    "Action.Goal": [
+      "delete"
+    ],
+    "Action.Benefit": [],
+    "Entity.Goal": [
+      "only the landmarks that I added"
+    ],
+    "Entity.Benefit": [],
+    "Benefit": "",
+    "Triggers": [
+      [
+        "User",
+        "delete"
+      ]
+    ],
+    "Targets": [
+      [
+        "delete",
+        "only the landmarks that I added"
+      ]
+    ],
+    "Contains": []
+  },
+  {
+    "PID": "US15",
+    "Text": "As a Visitor, I want to read comments on blog posts.",
+    "Persona": [
+      "Visitor"
+    ],
+    "Action.Goal": [
+      "read"
+    ],
+    "Action.Benefit": [],
+    "Entity.Goal": [
+      "comments on blog posts"
+    ],
+    "Entity.Benefit": [],
+    "Benefit": "",
+    "Triggers": [
+      [
+        "Visitor",
+        "read"
+      ]
+    ],
+    "Targets": [
+      [
+        "read",
+        "comments on blog posts"
+      ]
+    ],
+    "Contains": []
+  }
+]

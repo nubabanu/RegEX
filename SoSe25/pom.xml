@@ -64,6 +64,40 @@
       <version>5.10.0</version>
       <scope>test</scope>
     </dependency>
+    
+    <!-- JUnit Platform dependencies for TestRunner -->
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-launcher</artifactId>
+      <version>1.10.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-engine</artifactId>
+      <version>1.10.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-commons</artifactId>
+      <version>1.10.0</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- TestFX dependencies -->
+    <dependency>
+      <groupId>org.testfx</groupId>
+      <artifactId>testfx-core</artifactId>
+      <version>4.0.16-alpha</version> <!-- Or the latest stable version -->
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testfx</groupId>
+      <artifactId>testfx-junit5</artifactId>
+      <version>4.0.16-alpha</version> <!-- Or the latest stable version -->
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <repositories>

@@ -55,8 +55,55 @@ Once JDK 24 is installed and `toolchains.xml` is configured, you can build and r
     ```bash
     mvn clean javafx:run
     ```
-I run like this 
-cd /Users/zuhalsicim/sp25_gruppe6_fshaye_geilmann_manafov/SoSe25 && mvn clean javafx:run
+
+### 4. Alternative Ways to Run the Application
+
+#### Using the launch script
+
+We've created a convenient launch script that makes it easy to run the application:
+
+1. Navigate to the SoSe25 directory:
+   ```bash
+   cd /Users/zuhalsicim/sp25_gruppe6_fshaye_geilmann_manafov/SoSe25
+   ```
+
+2. Run the launch script:
+   ```bash
+   ./launch.sh
+   ```
+
+The script will automatically compile the application if needed and launch it using Maven's JavaFX plugin.
+
+#### Using the VS Code Task
+
+If you're using Visual Studio Code, you can run the application using the predefined task:
+
+1. Open the Command Palette (Cmd+Shift+P)
+2. Type "Tasks: Run Task" and select it
+3. Choose "Run JavaFX Application"
+
+#### Using IntelliJ IDEA
+
+If you're using IntelliJ IDEA, follow these steps to run the application:
+
+1. Open the project in IntelliJ IDEA:
+   - Select "Open" or "Import Project"
+   - Navigate to the `/Users/zuhalsicim/sp25_gruppe6_fshaye_geilmann_manafov/SoSe25` directory
+   - Select the `pom.xml` file and choose "Open as Project"
+
+2. Create a Run Configuration:
+   - Click on "Add Configuration" or "Edit Configurations" in the top-right corner
+   - Click the "+" button to add a new configuration
+   - Select "Maven"
+   - Set the following parameters:
+     - Name: `Run UserStoryApp`
+     - Command line: `javafx:run`
+     - Working directory: `/Users/zuhalsicim/sp25_gruppe6_fshaye_geilmann_manafov/SoSe25`
+   - Click "OK" to save the configuration
+
+3. Run the application:
+   - Click the green "Run" button in the toolbar
+   - Alternatively, use the keyboard shortcut Ctrl+R (Windows/Linux) or Cmd+R (macOS)
 
 This setup ensures that Maven uses JDK 24 for compiling and running the project, as specified in the `pom.xml`.
 
