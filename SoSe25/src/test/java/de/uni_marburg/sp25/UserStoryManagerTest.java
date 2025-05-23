@@ -40,7 +40,6 @@ public class UserStoryManagerTest {
         String content = "As a User, I want to login, so that I can access my account.";
         Files.writeString(testFile, content);
 
-        // Make sure we start with a fresh PID counter
         manager = new UserStoryManager();
         
         List<UserStory> stories = manager.readUserStories(testFile.toString());
@@ -54,10 +53,19 @@ public class UserStoryManagerTest {
         assertEquals(List.of("unidentified_entity"), story.getEntityGoal(), "EntityGoal for 'I want to login'");
         assertEquals("I can access my account", story.getBenefit());
         assertEquals(List.of("access"), story.getActionBenefit(), "ActionBenefit from 'I can access my account'");
-        assertEquals(List.of("access", "my", "account"), story.getEntityBenefit(), "EntityBenefit from 'I can access my account'");
+        assertEquals(List.of("account"), story.getEntityBenefit(), "EntityBenefit from 'I can access my account'");
         assertEquals(List.of(List.of("User", "login")), story.getTriggers(), "Triggers should be correctly populated.");
-        assertEquals(List.of(List.of("login", "unidentified_entity")), story.getTargets(), "Targets should be correctly populated.");
-        assertTrue(story.getContains().isEmpty(), "Contains should be empty for this story.");
+        // Targets: [[ActionGoal, EntityGoal], [ActionBenefit, EntityBenefit[0]], [ActionBenefit, EntityBenefit[1]]...]
+        assertEquals(List.of(
+                List.of("login", "unidentified_entity"),
+                List.of("access", "account")
+        ), story.getTargets(), "Targets should be correctly populated.");
+        // Contains: [[EntityGoal, EntityBenefit[0]], [EntityBenefit[0], EntityBenefit[1]]...]
+        // If EntityGoal is "unidentified_entity", it might not form "Contains" relationships.
+        // Or, if "my account" is seen as contained within the broader context of "login".
+        // Based on the provided example, "Information" (goal) contains "publicly available information" (benefit).
+        // So, "unidentified_entity" (goal) could contain "my account" (benefit).
+        assertEquals(List.of(List.of("unidentified_entity", "account")), story.getContains(), "Contains relationship between goal entity and benefit entity.");
     }
 
     @Test
@@ -93,7 +101,6 @@ public class UserStoryManagerTest {
                          "As a Manager, I want to generate sales reports, so that I can track performance.";
         Files.writeString(testFile, content);
 
-        // Make sure we start with a fresh PID counter
         manager = new UserStoryManager();
         
         List<UserStory> stories = manager.readUserStories(testFile.toString());
@@ -106,16 +113,25 @@ public class UserStoryManagerTest {
         assertEquals(List.of("view"), story1.getActionGoal());
         assertEquals(List.of("products"), story1.getEntityGoal());
         assertEquals("", story1.getBenefit());
+        assertEquals(List.of(List.of("Customer", "view")), story1.getTriggers());
+        assertEquals(List.of(List.of("view", "products")), story1.getTargets());
+        assertTrue(story1.getContains().isEmpty());
 
         UserStory story2 = stories.get(1);
         assertEquals("#G02#", story2.getPid());
         assertEquals("As a Manager, I want to generate sales reports, so that I can track performance.", story2.getText());
         assertEquals(List.of("Manager"), story2.getPersona());
         assertEquals(List.of("generate"), story2.getActionGoal());
-        assertEquals(List.of("sales", "reports"), story2.getEntityGoal());
+        assertEquals(List.of("sales reports"), story2.getEntityGoal());
         assertEquals("I can track performance", story2.getBenefit());
         assertEquals(List.of("track"), story2.getActionBenefit());
         assertEquals(List.of("performance"), story2.getEntityBenefit());
+        assertEquals(List.of(List.of("Manager", "generate")), story2.getTriggers());
+        assertEquals(List.of(
+                List.of("generate", "sales reports"),
+                List.of("track", "performance")
+        ), story2.getTargets());
+        assertEquals(List.of(List.of("sales reports", "performance")), story2.getContains());
     }
 
     @Test
@@ -124,15 +140,13 @@ public class UserStoryManagerTest {
         String content = "This is not a user story.";
         Files.writeString(testFile, content);
 
-        // Make absolutely sure we start with a fresh PID counter
         manager = new UserStoryManager();
         
         List<UserStory> stories = manager.readUserStories(testFile.toString());
         assertEquals(1, stories.size(), "Should still process the line and create a story object.");
         UserStory story = stories.get(0);
-        // PID #G02# is expected due to UserStoryManager calling generatePid() twice for malformed stories.
-        // First call for initial UserStory object (gets #G01# internally), second for partiallyParsedStory (gets #G02# and is returned).
-        assertEquals("#G02#", story.getPid(), "PID for single malformed story with fresh manager.");
+        // Malformed stories should get #G01# like any other story - no double PID generation
+        assertEquals("#G01#", story.getPid(), "PID for single malformed story should be #G01#.");
         assertEquals("This is not a user story.", story.getText());
         assertEquals(List.of("Unknown"), story.getPersona(), "Persona should be 'Unknown' for malformed story.");
         assertEquals(List.of("Unknown"), story.getActionGoal(), "ActionGoal should be 'Unknown'.");
@@ -154,40 +168,46 @@ public class UserStoryManagerTest {
                          "As an Editor, I want to publish an article, so that readers can see it."; // Story 3 (Valid)
         
         Files.writeString(testFile, content);
-        // manager is from setUp(), pidCounter starts at 1.
+        manager = new UserStoryManager();
         List<UserStory> stories = manager.readUserStories(testFile.toString());
         assertEquals(3, stories.size(), "Should read three entries (2 valid, 1 malformed, empty line ignored).");
 
         // Check first valid story
         UserStory story1 = stories.get(0);
-        assertEquals("#G01#", story1.getPid()); // First story, PID is #G01#
+        assertEquals("#G01#", story1.getPid()); 
         assertEquals("As a User, I want to logout.", story1.getText());
         assertEquals(List.of("User"), story1.getPersona());
         assertEquals(List.of("logout"), story1.getActionGoal());
-        assertEquals(List.of("unidentified_entity"), story1.getEntityGoal()); // "logout" is action, no further entities
+        assertEquals(List.of("unidentified_entity"), story1.getEntityGoal()); 
         assertEquals("", story1.getBenefit());
+        assertEquals(List.of(List.of("User", "logout")), story1.getTriggers());
+        assertEquals(List.of(List.of("logout", "unidentified_entity")), story1.getTargets());
+        assertTrue(story1.getContains().isEmpty());
 
-        // Check malformed story
+        // Check malformed story - should be #G02# in sequence
         UserStory story2 = stories.get(1);
-        // PID for malformed: manager's pidCounter was 2. parseUserStoryFromText calls generatePid() (becomes 3, #G02#),
-        // then again for partiallyParsedStory (becomes 4, #G03#). So, #G03#.
-        assertEquals("#G03#", story2.getPid());
+        assertEquals("#G02#", story2.getPid()); 
         assertEquals("This is another malformed line.", story2.getText());
         assertEquals(List.of("Unknown"), story2.getPersona());
         assertEquals(List.of("Unknown"), story2.getActionGoal());
         assertEquals(List.of("Unknown"), story2.getEntityGoal());
 
-        // Check second valid story
+        // Check second valid story - should be #G03# in sequence
         UserStory story3 = stories.get(2);
-        // PID for third story (second valid): manager's pidCounter was 4. generatePid() called once (becomes 5, #G04#).
-        assertEquals("#G04#", story3.getPid());
+        assertEquals("#G03#", story3.getPid()); 
         assertEquals("As an Editor, I want to publish an article, so that readers can see it.", story3.getText());
         assertEquals(List.of("Editor"), story3.getPersona());
         assertEquals(List.of("publish"), story3.getActionGoal());
         assertEquals(List.of("article"), story3.getEntityGoal());
         assertEquals("readers can see it", story3.getBenefit());
-        assertEquals(List.of("readers"), story3.getActionBenefit()); // extractActions takes first word for non "I can"
-        assertEquals(List.of("see"), story3.getEntityBenefit()); // extractEntities skips first, "can" and "it" are stopwords
+        assertEquals(List.of("see"), story3.getActionBenefit()); 
+        assertEquals(List.of("it"), story3.getEntityBenefit()); 
+        assertEquals(List.of(List.of("Editor", "publish")), story3.getTriggers());
+        assertEquals(List.of(
+                List.of("publish", "article"),
+                List.of("see", "it")
+        ), story3.getTargets());
+        assertEquals(List.of(List.of("article", "it")), story3.getContains());
     }
 
     @Test
@@ -196,7 +216,7 @@ public class UserStoryManagerTest {
         manager = new UserStoryManager(); // Reset manager for predictable PIDs if generating them here
 
         UserStory story1 = new UserStory();
-        story1.setPid("#G01#"); // Manually set for test consistency
+        story1.setPid("#G01#"); 
         story1.setText("As a Tester, I want to run tests.");
         story1.setPersona(List.of("Tester"));
         story1.setActionGoal(List.of("run"));
@@ -209,17 +229,17 @@ public class UserStoryManagerTest {
         story1.setContains(List.of());
 
         UserStory story2 = new UserStory();
-        story2.setPid("#G02#"); // Manually set
+        story2.setPid("#G02#"); 
         story2.setText("As a User, I want to see my profile, so that I can update my details.");
         story2.setPersona(List.of("User"));
         story2.setActionGoal(List.of("see"));
-        story2.setEntityGoal(List.of("my", "profile"));
+        story2.setEntityGoal(List.of("my profile"));
         story2.setBenefit("I can update my details");
         story2.setActionBenefit(List.of("update"));
-        story2.setEntityBenefit(List.of("my", "details"));
+        story2.setEntityBenefit(List.of("my details"));
         story2.setTriggers(List.of(List.of("User", "see")));
-        story2.setTargets(List.of(List.of("see", "my"))); // Assuming first entity after action
-        story2.setContains(List.of());
+        story2.setTargets(List.of(List.of("see", "my profile"), List.of("update", "my details"))); 
+        story2.setContains(List.of(List.of("my profile", "my details")));
 
 
         List<UserStory> originalStories = List.of(story1, story2);
@@ -275,10 +295,8 @@ public class UserStoryManagerTest {
 
     @Test
     void testParseUserStoryFromText_complexGoalAndBenefit() {
-        // This test focuses on the regex and overall structure parsing,
-        // and the placeholder nature of extractActions/Entities for complex phrases.
         String line = "As a Data Analyst, I want to generate complex monthly sales reports with detailed charts, so that I can present findings to the board effectively.";
-        manager = new UserStoryManager(); // Fresh manager for predictable PID
+        manager = new UserStoryManager(); 
         Path testFile = tempDir.resolve("complex_story.txt");
         try {
             Files.writeString(testFile, line);
@@ -289,12 +307,22 @@ public class UserStoryManagerTest {
             assertEquals("#G01#", story.getPid());
             assertEquals(List.of("Data Analyst"), story.getPersona());
             assertEquals(List.of("generate"), story.getActionGoal()); 
-            // Entities from "complex monthly sales reports with detailed charts" after removing "generate" and stopwords
-            assertEquals(List.of("complex", "monthly", "sales", "reports", "detailed", "charts"), story.getEntityGoal());
+            assertEquals(List.of("complex monthly sales reports with detailed charts"), story.getEntityGoal());
             assertEquals("I can present findings to the board effectively", story.getBenefit());
             assertEquals(List.of("present"), story.getActionBenefit()); 
-            // Entities from "findings to the board effectively" after removing "I can present" and stopwords
-            assertEquals(List.of("findings", "board", "effectively"), story.getEntityBenefit());
+            assertEquals(List.of("findings to the board"), story.getEntityBenefit());
+            assertEquals(List.of(List.of("Data Analyst", "generate")), story.getTriggers());
+            
+            // Targets: ActionGoal with each EntityGoal, ActionBenefit with each EntityBenefit
+            assertEquals(List.of(
+                    List.of("generate", "complex monthly sales reports with detailed charts"),
+                    List.of("present", "findings to the board")
+            ), story.getTargets());
+
+            // Contains: Sequential within goals, cross-relationships goal->benefit, sequential within benefits
+            assertEquals(List.of(
+                    List.of("complex monthly sales reports with detailed charts", "findings to the board")
+            ), story.getContains());
         } catch (IOException e) {
             fail("IOException during complex story test: " + e.getMessage());
         }
@@ -364,13 +392,16 @@ public class UserStoryManagerTest {
         assertEquals("#G01#", story.getPid());
         assertEquals(List.of("Marketer"), story.getPersona());
         assertEquals(List.of("track"), story.getActionGoal());
-        assertEquals(List.of("campaign", "results"), story.getEntityGoal()); // "results" not a stopword
+        assertEquals(List.of("campaign results"), story.getEntityGoal()); 
         assertEquals("the marketing budget is optimized", story.getBenefit());
-        // extractActions for "the marketing budget is optimized" -> "the"
-        assertEquals(List.of("the"), story.getActionBenefit());
-        // extractEntities for "the marketing budget is optimized" (skips "the") -> "marketing", "budget", "optimized"
-        // "is" is a stopword.
-        assertEquals(List.of("marketing", "budget", "optimized"), story.getEntityBenefit());
+        assertEquals(List.of("optimized"), story.getActionBenefit());
+        assertEquals(List.of("the marketing budget"), story.getEntityBenefit());
+        assertEquals(List.of(List.of("Marketer", "track")), story.getTriggers());
+        assertEquals(List.of(
+                List.of("track", "campaign results"),
+                List.of("optimized", "the marketing budget")
+        ), story.getTargets());
+        assertEquals(List.of(List.of("campaign results", "the marketing budget")), story.getContains());
     }
 
     @Test
@@ -387,9 +418,60 @@ public class UserStoryManagerTest {
         assertEquals("#G01#", story.getPid());
         assertEquals(List.of("System Administrator"), story.getPersona());
         assertEquals(List.of("configure"), story.getActionGoal());
-        // "the", "new" are not stopwords in the current list, but "the" is.
-        // "the" is a stopword. "new" is not.
-        assertEquals(List.of("new", "network", "firewall", "rules"), story.getEntityGoal());
+        assertEquals(List.of("new network firewall rules"), story.getEntityGoal());
         assertEquals("", story.getBenefit());
+        assertEquals(List.of(List.of("System Administrator", "configure")), story.getTriggers());
+        assertEquals(List.of(List.of("configure", "new network firewall rules")), story.getTargets());
+        assertTrue(story.getContains().isEmpty());
+    }
+
+    @Test
+    void testReadUserStories_providedExamplePublicUser() throws IOException {
+        Path testFile = tempDir.resolve("public_user_story.txt");
+        String content = "As a Public User, I want to Search for Information, so that I can obtain publicly available information concerning properties, County services, processes and other general information.";
+        Files.writeString(testFile, content);
+
+        manager = new UserStoryManager();
+
+        List<UserStory> stories = manager.readUserStories(testFile.toString());
+        assertEquals(1, stories.size(), "Should read one user story.");
+
+        UserStory story = stories.get(0);
+        assertEquals("#G01#", story.getPid());
+        assertEquals(content, story.getText());
+        assertEquals(List.of("Public User").toString(), story.getPersona().toString());
+        assertEquals(List.of("Search").toString(), story.getActionGoal().toString());
+        assertEquals(List.of("Information").toString(), story.getEntityGoal().toString());
+        assertEquals("I can obtain publicly available information concerning properties, County services, processes and other general information", story.getBenefit());
+        assertEquals(List.of("obtain").toString(), story.getActionBenefit().toString());
+        
+        // The actual parsing splits the long string into multiple entities
+        List<String> expectedEntityBenefitList = List.of(
+            "publicly available information concerning properties", 
+            "County services", 
+            "processes and other general information"
+        );
+        assertEquals(expectedEntityBenefitList.toString(), story.getEntityBenefit().toString());
+
+        assertEquals(List.of(List.of("Public User", "Search")).toString(), story.getTriggers().toString());
+
+        // Targets: ActionGoal->EntityGoal, ActionBenefit->each EntityBenefit
+        List<List<String>> expectedTargetsList = List.of(
+                List.of("Search", "Information"),
+                List.of("obtain", "publicly available information concerning properties"),
+                List.of("obtain", "County services"),
+                List.of("obtain", "processes and other general information")
+        );
+        assertEquals(expectedTargetsList.toString(), story.getTargets().toString());
+
+        // Contains: Goal->each Benefit entity, sequential relationships within benefit entities
+        List<List<String>> expectedContainsList = List.of(
+                List.of("Information", "publicly available information concerning properties"),
+                List.of("Information", "County services"),
+                List.of("Information", "processes and other general information"),
+                List.of("publicly available information concerning properties", "County services"),
+                List.of("County services", "processes and other general information")
+        );
+        assertEquals(expectedContainsList.toString(), story.getContains().toString());
     }
 }

@@ -1,0 +1,15 @@
+As a Visitor, I want to view news articles, so that I stay informed.
+As a Visitor, I want to see a list of news items, so that I stay up to date.
+As a Visitor, I want to view a list of news items, so that I stay up to date.
+As a User, I want to upload and edit photos to my album, so that my friends can see them.
+As an Administrator, I receive an email when a new user is registered.
+As a Care Professional, I want to see the registered hours of this week (split into products and activities). NOTE—first create the overview screen—then add validations.
+As an Administrator, I want to create a new user account, so that I can manage system users.
+As an Administrator, I want to change the permission rights of a user account, so that I can manage system users.
+As a User, I want to edit any landmark, so that I keep the map accurate.
+As a User, I want to delete only the landmarks that I added, so that I keep the map accurate.
+As a Data Manager, I want to sort the results, so that I can more easily review the results.
+This is not a user story.
+As a UI designer, I want to modify the content of a webpage.
+As an App-User, I want to edit the content that I added to a person's profile page.
+As an App-User, I want to edit the name that I added to a person's profile page.

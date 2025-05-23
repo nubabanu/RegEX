@@ -1,0 +1,68 @@
+[
+  {
+    "PID": "#G03#",
+    "Text": "As a Public User, I want to Search for Information, so that I can obtain publicly available information concerning properties, County services, processes and other general information.",
+    "Persona": [
+      "Public User"
+    ],
+    "Action": {
+      "Goal": [
+        "Search"
+      ],
+      "Benefit": [
+        "obtain"
+      ]
+    },
+    "Entity": {
+      "Goal": [
+        "Information"
+      ],
+      "Benefit": [
+        "properties",
+        "processes",
+        "publicly available information",
+        "County services",
+        "other general information"
+      ]
+    },
+    "Benefit": "I can obtain publicly available information concerning properties, County services, processes and other general information",
+    "Triggers": [
+      [
+        "Public User",
+        "Search"
+      ]
+    ],
+    "Targets": [
+      [
+        "Search",
+        "Information"
+      ],
+      [
+        "obtain",
+        "publicly available information"
+      ]
+    ],
+    "Contains": [
+      [
+        "publicly available information",
+        "properties"
+      ],
+      [
+        "publicly available information",
+        "County services"
+      ],
+      [
+        "publicly available information",
+        "processes"
+      ],
+      [
+        "publicly available information",
+        "other general information"
+      ],
+      [
+        "Information",
+        "publicly available information"
+      ]
+    ]
+  }
+]
