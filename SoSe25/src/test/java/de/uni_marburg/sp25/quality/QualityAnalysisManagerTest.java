@@ -234,22 +234,22 @@ public class QualityAnalysisManagerTest {
 
         assertNotNull(report);
         assertTrue(report.contains("Quality Report"));
-        assertTrue(report.contains("User Stories: \"multi_problem_file.txt\"")); // Corrected: single escape for quote in string literal
+        assertTrue(report.contains("User Stories: \"multi_problem_file.txt\"")); // Single escape for quote in string literal
         assertTrue(report.contains("Total Stories Analyzed: 2"));
         assertTrue(report.contains("Perfect Stories: 0"));
         assertTrue(report.contains("Total Problems Found: 2"));
 
         // Check Well-Formedness section
-        assertTrue(report.contains("Quality criterion: \"Well-Formedness\"")); // Corrected
+        assertTrue(report.contains("Quality criterion: \"Well-Formedness\""));
         assertTrue(report.contains("Number of quality problems: 1"));
-        assertTrue(report.contains("User Story: \"" + malformedStory.getText() + "\"")); // Corrected
-        assertTrue(report.contains("Problem: \"" + messages.getString("quality.problem.notWellFormed") + "\"")); // Corrected
+        assertTrue(report.contains("User Story: \"" + malformedStory.getText() + "\""));
+        assertTrue(report.contains("Problem: \"" + messages.getString("quality.problem.notWellFormed") + "\""));
 
         // Check Atomicity section
-        assertTrue(report.contains("Quality criterion: \"Atomicity\"")); // Corrected
+        assertTrue(report.contains("Quality criterion: \"Atomicity\""));
         assertTrue(report.contains("Number of quality problems: 1"));
-        assertTrue(report.contains("User Story: \"" + nonAtomicStory.getText() + "\"")); // Corrected
-        assertTrue(report.contains("Problem: \"" + messages.getString("quality.problem.notAtomic") + "\"")); // Corrected
+        assertTrue(report.contains("User Story: \"" + nonAtomicStory.getText() + "\""));
+        assertTrue(report.contains("Problem: \"" + messages.getString("quality.problem.notAtomic") + "\""));
     }
 
     @Test

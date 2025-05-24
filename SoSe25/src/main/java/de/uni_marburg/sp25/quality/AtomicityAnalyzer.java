@@ -7,13 +7,32 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 /**
- * Analyzes user stories for atomicity
- * A user story is atomic if it describes exactly one action
+ * Analyzes user stories for atomicity - ensuring each story describes exactly one action.
+ * 
+ * The atomicity principle states that a user story should focus on a single, well-defined
+ * functionality or feature. Stories that contain multiple actions or goals violate this
+ * principle and should be split into separate, focused stories.
+ * 
+ * Detection Methods:
+ * 1. Multiple actions in parsed actionGoal list (when UserStory parsing identifies multiple goals)
+ * 2. Conjunction words that typically indicate multiple actions ("and", "or", "then", etc.)
+ * 3. Text patterns suggesting compound functionality
+ * 
+ * Benefits of atomic stories:
+ * - Easier estimation and planning
+ * - Clearer acceptance criteria
+ * - Better testability
+ * - Reduced implementation complexity
+ * - More accurate progress tracking
  */
 public class AtomicityAnalyzer extends QualityCriterion {
 
+    /**
+     * Conjunction words that commonly indicate multiple actions or compound functionality.
+     * These words are linguistic signals that a story may be describing more than one action.
+     */
     private static final List<String> CONJUNCTION_WORDS = Arrays.asList(
-        "and", "or", "then", "also", "additionally", "furthermore", "moreover", "but" // Added "but"
+        "and", "or", "then", "also", "additionally", "furthermore", "moreover", "but"
     );
 
     public AtomicityAnalyzer(ResourceBundle messages) {
@@ -26,12 +45,10 @@ public class AtomicityAnalyzer extends QualityCriterion {
 
         for (UserStory story : userStories) {
             if (!isAtomic(story)) {
-                // Check if a problem for this specific criterion but for a different story (if stories are grouped by problem type)
-                // For atomicity, each non-atomic story is its own problem instance.
                 problems.add(new QualityProblem(
                     criterionName,
                     messages.getString("quality.problem.notAtomic"),
-                    List.of(story), // Each problem instance is tied to the specific non-atomic story
+                    List.of(story),
                     "NOT_ATOMIC"
                 ));
             }
@@ -40,9 +57,14 @@ public class AtomicityAnalyzer extends QualityCriterion {
         return problems;
     }
 
+    /**
+     * Determines if a user story is atomic by checking for multiple actions or goals.
+     * 
+     * @param story The user story to analyze
+     * @return true if the story describes a single action, false if multiple actions are detected
+     */
     private boolean isAtomic(UserStory story) {
-        // Check 1: Based on parsed actionGoal list from UserStory object
-        // This assumes UserStory.java correctly parses multiple actions into this list.
+        // Check parsed action goals - if multiple goals were identified during parsing
         if (story.getActionGoal() != null && story.getActionGoal().size() > 1) {
             return false; 
         }

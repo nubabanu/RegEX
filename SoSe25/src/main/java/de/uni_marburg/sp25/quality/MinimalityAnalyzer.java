@@ -6,8 +6,21 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 /**
- * Analyzes user stories for minimality
- * A user story is minimal if it contains only essential information (role, goal, benefit)
+ * Analyzes user stories for minimality - ensuring they contain only essential information.
+ * 
+ * The minimality principle states that a user story should contain only the essential
+ * components: role (persona), goal (action), and benefit. Any extraneous information
+ * makes the story unnecessarily complex and harder to understand or implement.
+ * 
+ * Analysis Process:
+ * 1. Extract the raw user story text
+ * 2. Remove identified persona, action goal, and benefit components
+ * 3. Clean up structural phrases ("as a", "I want to", "so that")
+ * 4. Check if any significant content remains after component removal
+ * 5. Flag stories with remaining content as non-minimal
+ * 
+ * This analyzer helps identify stories that might need refactoring to focus
+ * on core functionality without unnecessary details or multiple concerns.
  */
 public class MinimalityAnalyzer extends QualityCriterion {
 
@@ -32,36 +45,42 @@ public class MinimalityAnalyzer extends QualityCriterion {
         return problems;
     }
 
+    /**
+     * Determines if a user story is minimal by removing known components and checking for remaining content.
+     * 
+     * @param story The user story to analyze
+     * @return true if the story contains only essential components, false if extra content exists
+     */
     private boolean isMinimal(UserStory story) {
         if (story.getText() == null || story.getText().trim().isEmpty()) {
             return true; 
         }
 
         String originalText = story.getText().toLowerCase();
-        // Clean the original text: remove punctuation (except within words like em-dashes if needed later, but for now general clean), normalize spaces.
-        String cleanedOriginalText = originalText.replaceAll("[^a-z0-9\\s\\p{Pd}]", "").replaceAll("\\s+", " ").trim(); // Keep hyphens/dashes
+        // Normalize text: remove punctuation, normalize spaces, keep hyphens for compound terms
+        String cleanedOriginalText = originalText.replaceAll("[^a-z0-9\\s\\p{Pd}]", "").replaceAll("\\s+", " ").trim();
         String remainingText = cleanedOriginalText;
 
-        // 1. Remove Persona
+        // Remove persona component if present
         if (story.getPersona() != null && !story.getPersona().isEmpty()) {
             String personaPhrase = String.join(" ", story.getPersona()).toLowerCase()
                                    .replaceAll("[^a-z0-9\\s\\p{Pd}]", "").replaceAll("\\s+", " ").trim();
             remainingText = remainingText.replaceFirst("as a " + personaPhrase, "").trim();
-            remainingText = remainingText.replaceFirst("^,\\s*", "").trim(); // Clean leading comma from removal
+            remainingText = remainingText.replaceFirst("^,\\s*", "").trim();
         }
 
-        // 2. Remove "I want to [ActionGoal]" or "I want [ActionGoal]"
+        // Remove action goal component variations
         if (story.getActionGoal() != null && !story.getActionGoal().isEmpty()) {
             String actionPhrase = String.join(" ", story.getActionGoal()).toLowerCase()
                                   .replaceAll("[^a-z0-9\\s\\p{Pd}]", "").replaceAll("\\s+", " ").trim();
             if (!actionPhrase.isEmpty()) {
                 remainingText = remainingText.replaceFirst("i want to " + actionPhrase, "").trim();
-                remainingText = remainingText.replaceFirst("i want " + actionPhrase, "").trim(); // Variation without "to"
+                remainingText = remainingText.replaceFirst("i want " + actionPhrase, "").trim();
                 remainingText = remainingText.replaceFirst("^,\\s*", "").trim();
             }
         }
 
-        // 3. Remove "so that [Benefit]" or just "[Benefit]" if "so that" is absent
+        // Remove benefit component 
         if (story.getBenefit() != null && !story.getBenefit().trim().isEmpty()) {
             String benefitText = story.getBenefit().toLowerCase()
                                  .replaceAll("[^a-z0-9\\s\\p{Pd}]", "").replaceAll("\\s+", " ").trim();
@@ -72,12 +91,12 @@ public class MinimalityAnalyzer extends QualityCriterion {
             }
         }
         
-        // General cleanup of common structural remnants and leading/trailing punctuation
+        // Clean up structural remnants and punctuation
         remainingText = remainingText.replaceAll("^(,|so that|i want to|i want|as a)\\s*", "").trim();
         remainingText = remainingText.replaceAll("\\s*(,|so that)$", "").trim();
-        remainingText = remainingText.replaceAll("\\p{Punct}$", "").trim(); // Trailing punctuation
+        remainingText = remainingText.replaceAll("\\p{Punct}$", "").trim();
 
-        // If remainingText is empty at this point, it's minimal.
+        // Story is minimal if no significant content remains after component removal
         if (remainingText.isEmpty()) {
             return true;
         }

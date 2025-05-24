@@ -1,10 +1,11 @@
 package de.uni_marburg.sp25;
 
+// Jackson library for JSON processing and graph creation
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
-import java.io.File;
+// Standard Java imports
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -14,7 +15,30 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
- * Manages the creation and manipulation of annotation graphs from annotated JSON files.
+ * Manages annotation graph creation and manipulation from annotated JSON files.
+ * 
+ * This manager coordinates the process of:
+ * - Importing annotated JSON files containing user story relationships
+ * - Creating AnnotationGraph objects representing story dependencies
+ * - Validating JSON schema and relationship data integrity
+ * - Extracting relationship information (triggers, targets, contains) from annotations
+ * - Converting annotation data back into UserStory objects with relationship metadata
+ * 
+ * Annotation Graph Structure:
+ * - Each user story can have multiple relationship types
+ * - Triggers: Stories that must be completed before this story can start
+ * - Targets: Stories that are activated by completing this story  
+ * - Contains: Sub-stories that are part of this story's implementation
+ * 
+ * JSON Schema Expectations:
+ * - Array of user story objects at root level
+ * - Each story contains PID, Text, and optional relationship arrays
+ * - Relationship arrays contain lists of PIDs referencing other stories
+ * 
+ * Integration:
+ * - Works with UserStoryManager for complete story lifecycle management
+ * - Provides relationship data for GraphStream visualization
+ * - Supports quality analysis by understanding story dependencies
  */
 public class AnnotationGraphManager {
     
@@ -22,18 +46,23 @@ public class AnnotationGraphManager {
     private List<String> validationWarnings = new ArrayList<>();
     
     /**
-     * Constructor with resource bundle
-     * @param messages The resource bundle for localized messages
+     * Constructs the annotation graph manager with localized messages.
+     * @param messages ResourceBundle for internationalized warning and error messages
      */
     public AnnotationGraphManager(ResourceBundle messages) {
         this.messages = messages;
     }
     
     /**
-     * Import annotated JSON into annotation graphs
-     * @param jsonFile The path to the JSON file
-     * @return A map of PIDs to annotation graphs
-     * @throws IOException If there is an error reading the file
+     * Imports annotated JSON file and creates annotation graphs for each user story.
+     * 
+     * Processes the JSON file to extract user stories with their relationship annotations,
+     * validates the schema, and creates AnnotationGraph objects containing the relationship
+     * information that can be used for visualization and dependency analysis.
+     * 
+     * @param jsonFile Path to the annotated JSON file
+     * @return Map of PIDs to their corresponding AnnotationGraph objects
+     * @throws IOException If file reading or JSON parsing fails
      */
     public Map<String, AnnotationGraph> importAnnotatedJson(Path jsonFile) throws IOException {
         validationWarnings.clear();
@@ -48,7 +77,7 @@ public class AnnotationGraphManager {
         
         for (JsonNode story : stories) {
             if (!validateSchema(story)) {
-                continue; // Skip invalid stories
+                continue;
             }
             
             AnnotationGraph graph = new AnnotationGraph();

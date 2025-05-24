@@ -1,50 +1,50 @@
-[ {
+JSON Representation of test_user_stories.txt:\n\n[ {
   "PID" : "#G01#",
   "Text" : "As a User, I want to log in to the system, so that I can access my personalized content.",
   "Persona" : [ "User" ],
   "Action.Goal" : [ "log" ],
   "Action.Benefit" : [ "access" ],
   "Entity.Goal" : [ "system" ],
-  "Entity.Benefit" : [ "my", "personalized", "content" ],
+  "Entity.Benefit" : [ "personalized content" ],
   "Benefit" : "I can access my personalized content",
   "Triggers" : [ [ "User", "log" ] ],
-  "Targets" : [ [ "log", "system" ] ],
-  "Contains" : [ ]
+  "Targets" : [ [ "log", "system" ], [ "access", "personalized content" ] ],
+  "Contains" : [ [ "system", "personalized content" ] ]
 }, {
   "PID" : "#G02#",
   "Text" : "As an Administrator, I want to manage user accounts, so that I can ensure system security.",
   "Persona" : [ "Administrator" ],
   "Action.Goal" : [ "manage" ],
   "Action.Benefit" : [ "ensure" ],
-  "Entity.Goal" : [ "user", "accounts" ],
-  "Entity.Benefit" : [ "system", "security" ],
+  "Entity.Goal" : [ "user accounts" ],
+  "Entity.Benefit" : [ "system security" ],
   "Benefit" : "I can ensure system security",
   "Triggers" : [ [ "Administrator", "manage" ] ],
-  "Targets" : [ [ "manage", "user" ] ],
-  "Contains" : [ ]
+  "Targets" : [ [ "manage", "user accounts" ], [ "ensure", "system security" ] ],
+  "Contains" : [ [ "user accounts", "system security" ] ]
 }, {
   "PID" : "#G03#",
   "Text" : "As a Customer, I want to view product details, so that I can make an informed purchase decision.",
   "Persona" : [ "Customer" ],
   "Action.Goal" : [ "view" ],
   "Action.Benefit" : [ "make" ],
-  "Entity.Goal" : [ "product", "details" ],
-  "Entity.Benefit" : [ "informed", "purchase", "decision" ],
+  "Entity.Goal" : [ "product details" ],
+  "Entity.Benefit" : [ "informed purchase decision" ],
   "Benefit" : "I can make an informed purchase decision",
   "Triggers" : [ [ "Customer", "view" ] ],
-  "Targets" : [ [ "view", "product" ] ],
-  "Contains" : [ ]
+  "Targets" : [ [ "view", "product details" ], [ "make", "informed purchase decision" ] ],
+  "Contains" : [ [ "product details", "informed purchase decision" ] ]
 }, {
   "PID" : "#G04#",
   "Text" : "As a Content Creator, I want to publish new articles.",
   "Persona" : [ "Content Creator" ],
   "Action.Goal" : [ "publish" ],
   "Action.Benefit" : [ ],
-  "Entity.Goal" : [ "new", "articles" ],
+  "Entity.Goal" : [ "new articles" ],
   "Entity.Benefit" : [ ],
   "Benefit" : "",
   "Triggers" : [ [ "Content Creator", "publish" ] ],
-  "Targets" : [ [ "publish", "new" ] ],
+  "Targets" : [ [ "publish", "new articles" ] ],
   "Contains" : [ ]
 }, {
   "PID" : "#G05#",
@@ -53,9 +53,9 @@
   "Action.Goal" : [ "generate" ],
   "Action.Benefit" : [ "track" ],
   "Entity.Goal" : [ "reports" ],
-  "Entity.Benefit" : [ "key", "metrics" ],
+  "Entity.Benefit" : [ "key metrics" ],
   "Benefit" : "I can track key metrics",
   "Triggers" : [ [ "Data Analyst", "generate" ] ],
-  "Targets" : [ [ "generate", "reports" ] ],
-  "Contains" : [ ]
+  "Targets" : [ [ "generate", "reports" ], [ "track", "key metrics" ] ],
+  "Contains" : [ [ "reports", "key metrics" ] ]
 } ]

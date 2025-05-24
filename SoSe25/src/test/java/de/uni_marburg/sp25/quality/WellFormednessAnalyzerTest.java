@@ -122,7 +122,7 @@ class WellFormednessAnalyzerTest {
         
         List<QualityProblem> problems = analyzer.analyze(List.of(wellFormedStory, malformedStoryMissingGoal, malformedStoryMissingRole));
         assertEquals(2, problems.size(), "Should find problems in two malformed stories.");
-        // Further checks can be added to ensure the correct stories are flagged.
+        // Additional validation checks can be implemented to ensure correct story flagging.
     }
 
     @Test

@@ -33,9 +33,9 @@ public class ConflictFreeAnalyzerTest {
 
         story2 = new UserStory();
         story2.setPid("#S02#");
-        story2.setText("As a User, I am able to delete only the landmarks that I added.");
+        story2.setText("As a User, I am able to delete only the landmarks that I created.");
         story2.setActionGoal(List.of("delete"));
-        story2.setEntityGoal(List.of("only the landmarks that I added"));
+        story2.setEntityGoal(List.of("only the landmarks that I created"));
 
 
         story3 = new UserStory();

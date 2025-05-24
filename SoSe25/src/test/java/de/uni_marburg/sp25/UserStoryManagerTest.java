@@ -90,6 +90,47 @@ class UserStoryManagerTest {
         assertEquals("export", loaded.get(0).getActionGoal().get(0));
     }
 
+    @Test
+    void saveToJson_producesCleanJsonWithoutPrefix() throws Exception {
+        // Create test user stories
+        UserStory story1 = new UserStory("#G01#", "As a User, I want to log in to the system, so that I can access my personalized content.", 1, 1, 1, "User");
+        story1.setPersona(List.of("User"));
+        story1.setActionGoal(List.of("log"));
+        story1.setEntityGoal(List.of("system"));
+        
+        UserStory story2 = new UserStory("#G02#", "As an Admin, I want to manage users, so that I can control access.", 1, 1, 1, "Admin");
+        story2.setPersona(List.of("Admin"));
+        story2.setActionGoal(List.of("manage"));
+        story2.setEntityGoal(List.of("users"));
+
+        List<UserStory> stories = List.of(story1, story2);
+        
+        // Save to JSON
+        Path json = tmpDir.resolve("clean_test.json");
+        manager.saveToJson(stories, json.toString());
+        
+        // Read the saved JSON content
+        String jsonContent = Files.readString(json);
+        
+        // Verify the JSON doesn't start with unwanted prefix
+        assertFalse(jsonContent.startsWith("JSON Representation of"), 
+                   "JSON file should not contain the 'JSON Representation of' prefix");
+        
+        // Verify it starts with proper JSON array
+        assertTrue(jsonContent.trim().startsWith("["), 
+                  "JSON file should start with an array");
+        
+        // Verify it contains expected user story fields
+        assertTrue(jsonContent.contains("\"PID\""), "JSON should contain PID field");
+        assertTrue(jsonContent.contains("\"Text\""), "JSON should contain Text field");
+        assertTrue(jsonContent.contains("#G01#"), "JSON should contain first story PID");
+        assertTrue(jsonContent.contains("#G02#"), "JSON should contain second story PID");
+        
+        // Verify JSON is properly formatted (pretty printed)
+        assertTrue(jsonContent.contains("\n"), "JSON should be pretty printed with newlines");
+        assertTrue(jsonContent.contains("  "), "JSON should be pretty printed with indentation");
+    }
+
     // ---------- 3. Unsupported extension path --------------------------------------------------
     @Test
     void readUserStories_unsupportedExtension_throws() {

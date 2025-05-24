@@ -1,12 +1,41 @@
 package de.uni_marburg.sp25;
 
+// Jackson annotations for JSON serialization/deserialization
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Data model representing a user story with its components and relationships.
+ * 
+ * This class serves as the core data structure for user story management, supporting:
+ * - JSON serialization/deserialization via Jackson annotations
+ * - Structured representation of user story components (persona, action, benefit)
+ * - Relationship tracking between user stories (triggers, targets, contains)
+ * - Integration with quality analysis and graph visualization systems
+ * 
+ * User Story Structure:
+ * - PID: Unique project identifier (format: #G01#, #G02#, etc.)
+ * - Text: Original natural language text of the user story
+ * - Persona: Who the user is (role/actor)
+ * - Action.Goal & Entity.Goal: What the user wants to do
+ * - Action.Benefit & Entity.Benefit: Why the user wants it (separated by type)
+ * - Benefit: Consolidated benefit description
+ * 
+ * Relationship Types:
+ * - Triggers: Stories that activate this story
+ * - Targets: Stories that this story activates
+ * - Contains: Stories that are part of this story (composition)
+ * 
+ * Jackson Configuration:
+ * - @JsonIgnoreProperties: Allows flexible JSON parsing, ignoring unknown fields
+ * - @JsonProperty: Maps Java field names to JSON property names for consistency
+ */
 @JsonIgnoreProperties(ignoreUnknown = true) 
 public class UserStory {
+    
     @JsonProperty("PID")
     private String pid;
 
@@ -40,8 +69,14 @@ public class UserStory {
     @JsonProperty("Contains")
     private List<List<String>> contains;
 
-    // Default constructor for Jackson
+    /**
+     * Default constructor for Jackson deserialization and general usage.
+     * Initializes relationship collections to prevent null pointer exceptions.
+     */
     public UserStory() {
+        this.triggers = new ArrayList<>();
+        this.targets = new ArrayList<>();
+        this.contains = new ArrayList<>();
     }
 
     // Constructor used in tests
@@ -76,6 +111,11 @@ public class UserStory {
             this.entityBenefit = List.of();
             this.entityGoal = List.of();
         }
+        
+        // Initialize the annotation relationship fields
+        this.triggers = new ArrayList<>();
+        this.targets = new ArrayList<>();
+        this.contains = new ArrayList<>();
     }
 
     // Getters and setters for the new fields
@@ -89,7 +129,7 @@ public class UserStory {
     public void setEntityBenefit(List<String> entityBenefit) { this.entityBenefit = entityBenefit; }
 
 
-    // Removed nested Action and Entity classes as the Anforderungsbeschreibung specifies a flat structure for these within the JSON.
+    // Flat structure specification: Action and Entity data stored directly as lists within UserStory
     // The fields are now directly part of the UserStory class.
 
     public String getPid() { return pid; }
@@ -130,9 +170,13 @@ public class UserStory {
         return java.util.Objects.hash(pid, text, persona, actionGoal, actionBenefit, entityGoal, entityBenefit, benefit, triggers, targets, contains);
     }
 
+    /**
+     * Provides JSON-like string representation for debugging and logging.
+     * Note: For actual JSON serialization, use Jackson ObjectMapper instead.
+     * @return String representation in JSON-like format
+     */
     @Override
     public String toString() {
-        // Updated toString to reflect the changes in fields and match the specified JSON output format.
         return "{" +
                 "\\\"PID\\\": \\\"" + pid + "\\\"," +
                 "\\\"Text\\\": \\\"" + text + "\\\"," +

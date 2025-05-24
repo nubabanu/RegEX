@@ -103,7 +103,7 @@ class UserStoryPojoTest {
     }
 
     @Test
-    void testFieldBasedEquality() { // UserStory does not override equals/hashCode
+    void testFieldBasedEquality() { // UserStory overrides equals/hashCode based on all fields
         UserStory story1 = new UserStory("ID001", "Text", 0,0,0, "Role");
         UserStory story2 = new UserStory("ID001", "Text", 0,0,0, "Role");
 
@@ -114,8 +114,8 @@ class UserStoryPojoTest {
         assertEquals(story1.getBenefit(), story2.getBenefit());
         assertEquals(story1.getActionGoal(), story2.getActionGoal());
 
-        // Default equals() will compare references, so story1 and story2 are not equal.
-        // assertNotEquals(story1, story2, "Default equals should compare references.");
+        // UserStory overrides equals() to compare all field values, so instances with same data are equal
         assertEquals(story1, story2, "Instances with same field values should be equal.");
+        assertEquals(story1.hashCode(), story2.hashCode(), "Instances with same field values should have same hashCode.");
     }
 }

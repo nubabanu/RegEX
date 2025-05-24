@@ -3,17 +3,51 @@ package de.uni_marburg.sp25;
 import java.util.Objects;
 
 /**
- * Represents a node in an annotation graph.
+ * Represents a semantic node in an annotation graph containing user story components.
+ * 
+ * Node objects model the individual components extracted from user story text through
+ * natural language processing. Each node represents a distinct semantic element with
+ * a specific role in the user story structure:
+ * 
+ * Node Types and Their Meanings:
+ * - ROLE: Represents the persona or user type (e.g., "customer", "administrator")
+ * - GOAL_ACTION: Actions that users want to perform (e.g., "login", "purchase")
+ * - GOAL_ENTITY: Objects or data that actions target (e.g., "product", "account")
+ * - BENEFIT_ACTION: Actions that provide value (e.g., "save time", "increase efficiency")
+ * - BENEFIT_ENTITY: Entities that deliver benefits (e.g., "report", "dashboard")
+ * 
+ * Graph Visualization:
+ * Nodes are rendered using the GraphStream library with type-specific styling:
+ * - ROLE nodes appear in gold color to highlight personas
+ * - GOAL nodes use green colors to represent primary functionality
+ * - BENEFIT nodes use orange/salmon colors to emphasize value delivery
+ * 
+ * Natural Language Processing:
+ * Nodes are created through text analysis algorithms that identify and classify
+ * semantic components using pattern matching, stop word filtering, and entity extraction.
+ * The classification supports quality analysis and relationship discovery.
+ * 
+ * @see Edge
+ * @see AnnotationGraph
+ * @see UserStoryManager
  */
 public class Node {
     /**
-     * The type of node in the annotation graph
+     * Enumeration defining semantic categories for user story components.
+     * 
+     * These types align with user story template patterns (As a X, I want Y, So that Z)
+     * and support both visualization styling and quality analysis algorithms.
      */
     public enum Type {
+        /** User personas or roles (the "As a X" component) */
         ROLE,
+        /** Actions in the goal clause (verbs in "I want to Y") */
         GOAL_ACTION,
+        /** Entities in the goal clause (objects in "I want to Y") */
         GOAL_ENTITY,
+        /** Actions in the benefit clause (verbs in "So that Z") */
         BENEFIT_ACTION,
+        /** Entities in the benefit clause (objects in "So that Z") */
         BENEFIT_ENTITY
     }
 

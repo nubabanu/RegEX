@@ -1,0 +1,2 @@
+As a User, I want to log in to the system, so that I can access my personalized content.
+As an Administrator, I want to manage user accounts, so that I can ensure system security.

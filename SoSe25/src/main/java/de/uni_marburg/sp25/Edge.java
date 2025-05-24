@@ -3,15 +3,44 @@ package de.uni_marburg.sp25;
 import java.util.Objects;
 
 /**
- * Represents an edge in an annotation graph.
+ * Represents a directed relationship (edge) between two nodes in an annotation graph.
+ * 
+ * Edge objects model the semantic relationships between different components of a user story,
+ * such as how personas trigger actions, how actions target entities, or how entities contain
+ * other entities. These relationships are essential for:
+ * 
+ * - Graph visualization using GraphStream library
+ * - Quality analysis algorithms that examine story dependencies
+ * - Semantic understanding of user story structure
+ * - Natural language processing of story relationships
+ * 
+ * Edge Types:
+ * - TRIGGER: Indicates that one component initiates another (e.g., persona -> action)
+ * - TARGET: Shows that an action is directed toward an entity (e.g., action -> entity)
+ * - CONTAINS: Represents hierarchical containment (e.g., entity -> sub-entity)
+ * 
+ * Graph Integration:
+ * This class integrates with AnnotationGraphManager for graph construction and with
+ * GraphStream for interactive visualization. The relationship data supports both
+ * static analysis and dynamic graph rendering.
+ * 
+ * @see AnnotationGraph
+ * @see Node
+ * @see AnnotationGraphManager
  */
 public class Edge {
     /**
-     * The type of edge in the annotation graph
+     * Enumeration defining the types of semantic relationships between nodes.
+     * 
+     * These types correspond to different syntactic and semantic patterns
+     * found in user story text analysis and natural language processing.
      */
     public enum Type {
+        /** Indicates that the source node initiates or triggers the target node */
         TRIGGER,
+        /** Shows that the source node is directed toward or acts upon the target node */
         TARGET,
+        /** Represents that the source node hierarchically contains the target node */
         CONTAINS
     }
 

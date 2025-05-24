@@ -4,10 +4,49 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Represents a graph of annotations extracted from a user story.
+ * Represents a semantic annotation graph extracted from a user story through natural language processing.
+ * 
+ * AnnotationGraph serves as the core data structure for representing the semantic relationships
+ * between different components of a user story. It provides:
+ * 
+ * Graph Structure:
+ * - Nodes: Semantic components (personas, actions, entities) extracted from story text
+ * - Edges: Relationships between components (triggers, targets, contains)
+ * - Directed graph model supporting complex relationship analysis
+ * 
+ * Integration with Analysis Systems:
+ * - Quality Analysis: Graph structure enables dependency analysis, conflict detection,
+ *   and completeness checking across multiple quality criteria
+ * - Visualization: Integrates with GraphStream library for interactive graph rendering
+ * - NLP Pipeline: Constructed through text parsing algorithms in UserStoryManager
+ * 
+ * Data Storage:
+ * - Uses HashSet collections for efficient node/edge lookup and duplicate prevention
+ * - JSON serialization support through Jackson library for persistence
+ * - Immutable once constructed to ensure graph consistency during analysis
+ * 
+ * Quality Analysis Applications:
+ * - Independence: Analyzes cross-story dependencies through graph traversal
+ * - Conflict Detection: Identifies contradicting relationships between components
+ * - Completeness: Ensures all necessary components and relationships are present
+ * - Atomicity: Validates single-responsibility principle through graph connectivity
+ * 
+ * @see Node
+ * @see Edge
+ * @see AnnotationGraphManager
+ * @see UserStoryManager
  */
 public class AnnotationGraph {
+    /** 
+     * Set of semantic nodes representing user story components.
+     * Uses HashSet for O(1) lookup performance and automatic duplicate prevention.
+     */
     private Set<Node> nodes = new HashSet<>();
+    
+    /** 
+     * Set of directed edges representing relationships between nodes.
+     * Uses HashSet for efficient relationship queries and cycle detection.
+     */
     private Set<Edge> edges = new HashSet<>();
 
     /**

@@ -4,30 +4,71 @@ import de.uni_marburg.sp25.UserStory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.regex.Matcher; // Re-add import
 import java.util.regex.Pattern;
 
 /**
- * Analyzes user stories for uniformity
- * A user story is uniform if it follows the standard "As a..., I want..., so that..." format
+ * Analyzes user stories for uniformity according to the INVEST criteria.
+ * 
+ * A user story is considered uniform if it follows the standard template structure:
+ * "As a [role], I want [goal], so that [benefit]" (full format)
+ * OR "As a [role], I want [goal]." (simplified format)
+ * 
+ * This analyzer uses regular expressions to parse user story text and validate structural conformity.
+ * It checks for proper template usage while allowing flexibility in the "goal" section to accommodate
+ * legitimate uses of prepositions like "for" in phrases such as "search for" or "apply for".
+ * 
+ * Key features:
+ * - Uses Java Pattern class with CASE_INSENSITIVE matching for robust text analysis
+ * - Validates both full template format (with benefit) and simplified format (goal only)
+ * - Distinguishes between legitimate preposition usage and non-uniform benefit inclusion
+ * - Provides specific feedback for non-uniform stories to guide improvement
+ * 
+ * Dependencies:
+ * - ResourceBundle: For internationalized error messages
+ * - Pattern: For regular expression matching and text validation
+ * - Extends QualityCriterion: Provides base functionality for quality analysis
  */
 public class UniformityAnalyzer extends QualityCriterion {
 
-    // Pattern 1: "As a R, I want G." - Captures G in a group named "goal"
+    /**
+     * Regular expression pattern for goal-only user stories.
+     * Matches: "As a [role], I want [goal]."
+     * Named capture group "goal" extracts the goal content for further analysis.
+     */
     private static final Pattern P_GOAL_ONLY = Pattern.compile(
         "^As (?:a|an)\\s+[^,]+,\\s*I want\\s+(?<goal>.+?)\\.$",
         Pattern.CASE_INSENSITIVE
     );
-    // Pattern 2: "As a R, I want G, so that B."
+    
+    /**
+     * Regular expression pattern for full template user stories.
+     * Matches: "As a [role], I want [goal], so that [benefit]."
+     * Named capture group "goal" extracts the goal content.
+     */
     private static final Pattern P_GOAL_SO_THAT_BENEFIT = Pattern.compile(
         "^As (?:a|an)\\s+[^,]+,\\s*I want\\s+(?<goal>.+?),\\s*so that\\s+.+\\.$",
         Pattern.CASE_INSENSITIVE
     );
 
+    /**
+     * Constructs a UniformityAnalyzer with internationalized messages.
+     * 
+     * @param messages ResourceBundle containing localized error messages and descriptions
+     */
     public UniformityAnalyzer(ResourceBundle messages) {
         super("uniformity", messages);
     }
 
+    /**
+     * Analyzes a collection of user stories for uniformity violations.
+     * 
+     * Checks each story against the standard template formats and identifies stories
+     * that don't conform to the expected structure. Returns problems for stories that
+     * lack proper template formatting or contain structural issues.
+     * 
+     * @param userStories List of UserStory objects to analyze
+     * @return List of QualityProblem objects identifying non-uniform stories
+     */
     @Override
     public List<QualityProblem> analyze(List<UserStory> userStories) {
         List<QualityProblem> problems = new ArrayList<>();
@@ -45,26 +86,38 @@ public class UniformityAnalyzer extends QualityCriterion {
         return problems;
     }
 
+    /**
+     * Determines if a user story follows the uniform template structure.
+     * 
+     * A story is considered uniform if it matches either:
+     * 1. Full format: "As a [role], I want [goal], so that [benefit]."
+     * 2. Simplified format: "As a [role], I want [goal]." (with legitimate preposition usage)
+     * 
+     * Special handling for prepositions:
+     * - Allows legitimate uses like "search for", "apply for", "register for"
+     * - Rejects benefit-like usage such as "for security reasons" in goal section
+     * 
+     * @param story UserStory object to evaluate for uniformity
+     * @return true if story follows uniform template structure, false otherwise
+     */
     private boolean isUniform(UserStory story) {
         if (story.getText() == null || story.getText().trim().isEmpty()) {
-            return false; // An empty story is not uniform.
+            return false; // Empty or null stories are not uniform
         }
         String text = story.getText().trim();
 
-        // Check 1: Does it match "As a R, I want G, so that B."?
+        // Check for full template format: "As a [role], I want [goal], so that [benefit]."
         if (P_GOAL_SO_THAT_BENEFIT.matcher(text).matches()) {
-            return true; // Uniform
+            return true; // Properly structured with explicit benefit
         }
 
-        // Check 2: Does it match "As a R, I want G."?
+        // Check for simplified format: "As a [role], I want [goal]."
         java.util.regex.Matcher goalOnlyMatcher = P_GOAL_ONLY.matcher(text);
         if (goalOnlyMatcher.matches()) {
             String goalContent = goalOnlyMatcher.group("goal").toLowerCase();
 
             if (goalContent.contains(" for ")) {
-                // If " for " is present, uniformity depends on whether it's a legitimate usage.
-                // isLegitimateForUsage = true means it's like "search for", so uniform.
-                // isLegitimateForUsage = false means it's like "for security reasons", so non-uniform.
+                // Determine if "for" usage is legitimate (action-related) or benefit-like
                 boolean isLegitimateForUsage =
                     goalContent.contains("search for") || goalContent.contains("look for") ||
                     goalContent.contains("apply for") || goalContent.contains("prepare for") ||
@@ -74,13 +127,12 @@ public class UniformityAnalyzer extends QualityCriterion {
                     goalContent.contains("opt for") || goalContent.contains("arrange for");
                 return isLegitimateForUsage;
             } else {
-                // No " for " in goal, so it's a clean goal-only story (e.g., "I want to logout.")
+                // Clean goal-only story without problematic prepositions
                 return true; 
             }
         }
 
-        // If neither of the specific uniform patterns matched, it's not uniform.
-        // This covers cases like missing "As a", missing "I want", or other structural issues.
+        // Story doesn't match either uniform pattern (missing template elements, wrong structure, etc.)
         return false;
     }
 }

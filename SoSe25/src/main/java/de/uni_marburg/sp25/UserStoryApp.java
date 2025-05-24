@@ -1,11 +1,15 @@
 package de.uni_marburg.sp25;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+// Core library imports
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+
+// Application-specific imports
 import de.uni_marburg.sp25.quality.QualityAnalysisManager;
 import de.uni_marburg.sp25.quality.QualityAnalysisResult;
 import de.uni_marburg.sp25.quality.QualityCriterion;
+
+// JavaFX UI framework imports
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -14,100 +18,159 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.layout.Pane; // Added for GraphStream
+import javafx.scene.layout.Pane; 
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+// Standard Java imports
 import java.io.File;
+import java.io.FileWriter; 
 import java.io.IOException;
+import java.nio.file.Files; 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle; // Ensure this import is present
-import java.util.Map; // For availableCriteria field
+import java.util.List; 
+import java.util.Locale; 
+import java.util.ResourceBundle; 
+import java.util.Map;
 
+/**
+ * Main JavaFX application for User Story Management and Quality Analysis.
+ * 
+ * This application provides a comprehensive platform for:
+ * - Loading user stories from text or JSON files
+ * - Converting between text and JSON formats using Jackson library
+ * - Performing quality analysis using multiple criteria (atomicity, minimality, etc.)
+ * - Visualizing user story relationships as graphs using GraphStream
+ * - Generating quality reports with detailed problem descriptions
+ * - Supporting internationalization (English/German) via ResourceBundle
+ * 
+ * Key Dependencies:
+ * - JavaFX: Provides the desktop GUI framework with scenes, controls, and layouts
+ * - Jackson: Handles JSON serialization/deserialization for user story data
+ * - GraphStream: Renders interactive graph visualizations of story relationships
+ * - ResourceBundle: Enables multi-language support for UI text
+ * 
+ * Architecture:
+ * - UserStoryApp: Main UI controller and application entry point
+ * - UserStoryManager: Handles file I/O and data conversion operations
+ * - QualityAnalysisManager: Coordinates quality analysis across multiple criteria
+ * - AnnotationGraphManager: Manages graph visualization and relationship extraction
+ */
 public class UserStoryApp extends Application {
-    private Stage primaryStage; // Add this field
-
+    
+    // Core application components
+    private Stage primaryStage;
     private UserStoryManager manager = new UserStoryManager();
     private QualityAnalysisManager qualityManager;
-    private TextArea txtOutputArea = new TextArea();
-    private TextArea jsonOutputArea = new TextArea();
-    private TextArea warningsArea = new TextArea();
-    private TextArea qualityResultsArea = new TextArea();
-    // private TextArea graphVisualizationArea = new TextArea(); // Replaced by Pane
-    private Pane graphVisualizationPane; // Added for GraphStream
+    
+    // UI text areas for displaying different types of content
+    private TextArea txtOutputArea = new TextArea();           // Original text format user stories
+    private TextArea jsonOutputArea = new TextArea();          // JSON formatted user stories  
+    private TextArea warningsArea = new TextArea();            // Parsing warnings and errors
+    private TextArea qualityResultsArea = new TextArea();      // Quality analysis results
+    
+    // Specialized UI components
+    private Pane graphVisualizationPane;                       // Container for GraphStream visualizations
+    
+    // Menu components for application navigation
     private Menu fileMenu;
     private MenuItem exitItem;
+    
+    // File operation controls
     private Label loadFileLabel;
     private Button loadTxtButton;
-    private Button loadJsonButton;
+    private Button loadJsonButton; 
     private Button clearButton;
     private Button convertToJsonButton;
     private Button saveJsonButton;
+    
+    // Language selection and internationalization controls
     private ComboBox<String> languageSelector;
     private Label languageLabelText;
     private Button changeLanguageButton;
-    private Label warningsLabel;
-    private TabPane tabPane; // Added field
-    private VBox qualityCriteriaBox; // Moved declaration here
-    private HBox graphButtonBox; // Added field for graph button HBox
     
-    // Graph visualization components
+    // Warning display controls
+    private Label warningsLabel;
+    
+    // Main layout containers
+    private TabPane tabPane;                                    // Organizes functionality into tabs
+    private VBox qualityCriteriaBox;                           // Container for quality criteria selection
+    private HBox graphButtonBox;
+    
+    // Graph visualization controls
     private Label graphVisualizationLabel;
     private Button showGraphButton;
-    private ListView<UserStory> graphUserStoriesListView; // Added for graph tab story selection
+    private ListView<UserStory> graphUserStoriesListView;      // Selectable list for graph generation
     private Label graphUserStoriesLabel;
     
-    // Quality analysis components
+    // Quality analysis controls  
     private Label qualityAnalysisLabel;
     private Button analyzeQualityButton;
     private Button exportReportButton;
-    private ListView<UserStory> userStoriesListView;
-    private List<CheckBox> criteriaCheckBoxes = new ArrayList<>();
+    private ListView<UserStory> userStoriesListView;           // Selectable list for quality analysis
+    private List<CheckBox> criteriaCheckBoxes = new ArrayList<>(); // Dynamic criteria selection
     private Label qualityResultsLabel;
     private Label userStoriesLabel;
     private Label criteriaLabel;
     
+    // Application state management
     private List<UserStory> currentUserStories = new ArrayList<>();
     private QualityAnalysisResult lastAnalysisResult;
     private String currentFileName = "";
+    
+    // Internationalization and configuration
+    private ResourceBundle messages;                            // Localized text resources
+    private Map<String, QualityCriterion> availableCriteria;   // Quality analysis criteria registry
 
-    private ResourceBundle messages;
-    private Map<String, QualityCriterion> availableCriteria; // Added field for criteria re-initialization
+    /**
+     * Provides access to the current ResourceBundle for internationalization.
+     * Used by other components that need localized text resources.
+     * @return Current ResourceBundle instance containing localized messages
+     */
+    public ResourceBundle getMessages() {
+        return messages;
+    }
 
+    /**
+     * Main application entry point and UI initialization.
+     * 
+     * Sets up the complete JavaFX interface including:
+     * - Language selection controls with ResourceBundle support
+     * - Tabbed interface for file operations and quality analysis  
+     * - Event handlers for all user interactions
+     * - Initial window sizing and scene configuration
+     * 
+     * @param primaryStage The primary stage provided by JavaFX framework
+     */
     @Override
     public void start(Stage primaryStage) {
-        this.primaryStage = primaryStage; // Assign to the field
+        this.primaryStage = primaryStage;
         
-        // Initialize components that need IDs set before other UI setup
+        // Initialize UI components that require early setup for testing and event handling
         languageSelector = new ComboBox<>();
-        changeLanguageButton = new Button(); // Initialize, text will be set later
-        qualityCriteriaBox = new VBox(5); // Initialize here
-        qualityCriteriaBox.setId("qualityCriteriaBox"); // And set ID here
+        changeLanguageButton = new Button();
+        qualityCriteriaBox = new VBox(5);
+        qualityCriteriaBox.setId("qualityCriteriaBox");
         
-        // Initialize qualityManager before loading resources that depend on it
-        // Ensure messages is loaded first if QualityAnalysisManager constructor needs it immediately.
-        // However, typical practice is to load messages, then pass to manager.
-        // For now, let's ensure messages is available for the first loadResourceBundle call.
-        messages = ResourceBundle.getBundle("de.uni_marburg.sp25.messages", Locale.ENGLISH); // Load default messages
-        qualityManager = new QualityAnalysisManager(messages); 
+        // Load default English resources and initialize quality analysis system
+        // QualityAnalysisManager requires ResourceBundle for localized criterion names
+        messages = ResourceBundle.getBundle("de.uni_marburg.sp25.messages", Locale.ENGLISH);
+        qualityManager = new QualityAnalysisManager(messages);
 
-        loadResourceBundle(primaryStage, Locale.ENGLISH); // Pass primaryStage here
-        // qualityManager = new QualityAnalysisManager(messages); // Moved up
+        loadResourceBundle(primaryStage, Locale.ENGLISH);
 
-        // Set IDs for components accessed by tests
+        // Configure component IDs for automated testing and accessibility
         txtOutputArea.setId("txtOutputArea");
         jsonOutputArea.setId("jsonOutputArea");
-        warningsArea.setId("warningsArea"); // Though not directly in test, good practice
+        warningsArea.setId("warningsArea");
         qualityResultsArea.setId("qualityResultsArea");
         languageSelector.setId("languageSelector");
         changeLanguageButton.setId("changeLanguageButton");
-        // Note: Labels like loadFileLabel are created within methods, ID needs to be set there.
-        // Buttons like analyzeQualityButton are also created in methods.
 
+        // Configure main window properties
         primaryStage.setTitle(messages.getString("app.title"));
 
+        // Create application menu bar
         MenuBar menuBar = new MenuBar();
         fileMenu = new Menu(messages.getString("menu.file"));
         exitItem = new MenuItem(messages.getString("menu.file.exit"));
@@ -115,26 +178,25 @@ public class UserStoryApp extends Application {
         fileMenu.getItems().add(exitItem);
         menuBar.getMenus().add(fileMenu);
 
+        // Setup language selection controls for internationalization
         languageLabelText = new Label(messages.getString("label.language"));
-        // languageSelector = new ComboBox<>(); // Moved up
         languageSelector.getItems().addAll("English", "Deutsch");
         languageSelector.setValue("English");
 
-        // changeLanguageButton = new Button(messages.getString("button.changeLanguage")); // Moved up
-        changeLanguageButton.setText(messages.getString("button.changeLanguage")); // Set text now
+        changeLanguageButton.setText(messages.getString("button.changeLanguage"));
         changeLanguageButton.setOnAction(_ -> {
-            updateUIText(this.primaryStage, languageSelector.getValue()); // Pass this.primaryStage
+            updateUIText(this.primaryStage, languageSelector.getValue());
         });
 
         HBox languageBox = new HBox(10, languageLabelText, languageSelector, changeLanguageButton);
         languageBox.setAlignment(Pos.CENTER_RIGHT);
         languageBox.setPadding(new Insets(5));
 
-        // Create tabs
-        this.tabPane = new TabPane(); // Initialize the field directly
-        tabPane.setId("mainTabPane"); // Add ID to TabPane
+        // Create main tabbed interface to organize application functionality
+        this.tabPane = new TabPane();
+        tabPane.setId("mainTabPane");
 
-        // Tab 1: File Operations
+        // Tab 1: File Operations - handles loading, converting, and saving user stories
         Tab fileOperationsTab = new Tab(messages.getString("tab.fileOperations"));
         fileOperationsTab.setId("fileOperationsTab");
         fileOperationsTab.setClosable(false);
@@ -142,7 +204,7 @@ public class UserStoryApp extends Application {
         VBox fileOperationsContent = createFileOperationsTab();
         fileOperationsTab.setContent(new ScrollPane(fileOperationsContent));
         
-        // Tab 2: Quality Analysis
+        // Tab 2: Quality Analysis - performs quality assessment using multiple criteria
         Tab qualityAnalysisTab = new Tab(messages.getString("tab.qualityAnalysis"));
         qualityAnalysisTab.setId("qualityAnalysisTab");
         qualityAnalysisTab.setClosable(false);
@@ -152,9 +214,10 @@ public class UserStoryApp extends Application {
         
         tabPane.getTabs().addAll(fileOperationsTab, qualityAnalysisTab);
 
-        // Event handlers
+        // Configure event handlers for user interactions
         setupEventHandlers(primaryStage);
 
+        // Assemble main application layout
         VBox mainLayout = new VBox(10, languageBox, tabPane);
         mainLayout.setPadding(new Insets(15));
 
@@ -167,10 +230,22 @@ public class UserStoryApp extends Application {
         primaryStage.show();
     }
 
+    /**
+     * Creates the file operations tab containing controls for loading, converting, and saving user stories.
+     * 
+     * This tab provides:
+     * - File loading from TXT or JSON formats
+     * - Text-to-JSON conversion using Jackson ObjectMapper
+     * - JSON export functionality with pretty printing
+     * - Real-time display of parsing warnings and errors
+     * - Output areas for both original text and converted JSON
+     * 
+     * @return VBox containing all file operation controls and display areas
+     */
     private VBox createFileOperationsTab() {
-        // File operations
+        // Create file operation controls with internationalized labels
         loadFileLabel = new Label(messages.getString("label.loadUserStories"));
-        loadFileLabel.setId("loadFileLabel"); // Set ID
+        loadFileLabel.setId("loadFileLabel");
         loadTxtButton = new Button(messages.getString("button.loadTxt"));
         loadTxtButton.setId("loadTxtButton");
         loadJsonButton = new Button(messages.getString("button.loadJson"));
@@ -185,7 +260,7 @@ public class UserStoryApp extends Application {
         HBox fileOperationsBox = new HBox(10, loadTxtButton, loadJsonButton, convertToJsonButton, saveJsonButton, clearButton);
         fileOperationsBox.setPadding(new Insets(10,0,10,0));
 
-        // Text areas
+        // Configure text display areas for user story content
         txtOutputArea.setEditable(false);
         txtOutputArea.setPromptText(messages.getString("prompt.txtOutputArea"));
         txtOutputArea.setPrefHeight(200);
@@ -200,56 +275,50 @@ public class UserStoryApp extends Application {
         warningsArea.setPromptText(messages.getString("prompt.warningsArea"));
         warningsArea.setPrefHeight(80);
         
-        // Graph visualization area
+        // Graph visualization components using GraphStream library
         graphVisualizationLabel = new Label(messages.getString("label.graphVisualization"));
         graphVisualizationLabel.setId("graphVisualizationLabel");
         
-        // User story selection for graph visualization
+        // User story selection for graph generation
         graphUserStoriesLabel = new Label(messages.getString("label.selectGraphStory"));
         graphUserStoriesLabel.setId("graphUserStoriesLabel");
         graphUserStoriesListView = new ListView<>();
         graphUserStoriesListView.setId("graphUserStoriesListView");
         graphUserStoriesListView.setPrefHeight(150);
         graphUserStoriesListView.setPrefWidth(400);
-        graphUserStoriesListView.setCellFactory(listView -> new ListCell<UserStory>() {
+        
+        // Custom cell factory to display user stories with PID and text
+        graphUserStoriesListView.setCellFactory(_ -> new ListCell<UserStory>() {
             @Override
             protected void updateItem(UserStory item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    // Ensure PID is not null before using it
                     String pidText = item.getPid() != null ? item.getPid() + ": " : "";
                     setText(pidText + item.getText());
                 }
             }
         });
-        
-        // graphVisualizationArea = new TextArea(); // Old TextArea
-        // graphVisualizationArea.setEditable(false);
-        // graphVisualizationArea.setPromptText(messages.getString("prompt.graphVisualizationArea"));
-        // graphVisualizationArea.setPrefHeight(200);
-        // graphVisualizationArea.setId("graphVisualizationArea");
 
-        // New Pane for GraphStream
+        // GraphStream visualization container (replaces traditional text area)
         graphVisualizationPane = new Pane();
-        graphVisualizationPane.setPrefHeight(400); // Increased height for better graph display
+        graphVisualizationPane.setPrefHeight(400);
         graphVisualizationPane.setId("graphVisualizationPane");
-        graphVisualizationPane.setStyle("-fx-border-color: lightgrey;"); // Optional: add a border
+        graphVisualizationPane.setStyle("-fx-border-color: lightgrey;");
 
         showGraphButton = new Button(messages.getString("button.showGraph"));
         showGraphButton.setId("showGraphButton");
         
         HBox graphButtonBox = new HBox(10, showGraphButton);
         graphButtonBox.setPadding(new Insets(5,0,5,0));
-        this.graphButtonBox = graphButtonBox; // Assign to class field
+        this.graphButtonBox = graphButtonBox;
         
         VBox graphVisualizationBox = new VBox(5, 
             graphUserStoriesLabel,
             graphUserStoriesListView,
             graphButtonBox,
-            // graphVisualizationArea // Old TextArea
-            graphVisualizationPane // New Pane
+            graphVisualizationPane
         );
 
         VBox outputDisplayBox = new VBox(10, 
@@ -258,36 +327,51 @@ public class UserStoryApp extends Application {
             warningsLabel, warningsArea,
             graphVisualizationLabel, graphVisualizationBox);
 
-        // Initially hide the graph visualization area
+        // Initially hide graph visualization controls until user stories are loaded
         graphVisualizationLabel.setVisible(false);
         graphUserStoriesLabel.setVisible(false);
         graphUserStoriesListView.setVisible(false);
         graphButtonBox.setVisible(false);
-        // graphVisualizationArea.setVisible(false); // Old TextArea
-        graphVisualizationPane.setVisible(false); // New Pane
+        graphVisualizationPane.setVisible(false);
 
         return new VBox(10, loadFileLabel, fileOperationsBox, outputDisplayBox);
     }
 
+    /**
+     * Creates the quality analysis tab containing controls for analyzing user story quality.
+     * 
+     * This tab provides:
+     * - Multi-criteria quality analysis (atomicity, minimality, uniformity, etc.)
+     * - User story selection for targeted analysis
+     * - Dynamic criteria selection via checkboxes
+     * - Quality results display with detailed problem descriptions
+     * - Report export functionality for analysis results
+     * 
+     * Quality criteria are managed by QualityAnalysisManager and implemented as separate
+     * analyzer classes, each focusing on specific quality aspects of user stories.
+     * 
+     * @return VBox containing all quality analysis controls and display areas
+     */
     private VBox createQualityAnalysisTab() {
         qualityAnalysisLabel = new Label(messages.getString("label.qualityAnalysis"));
         qualityAnalysisLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        qualityAnalysisLabel.setId("qualityAnalysisLabel");
         
         analyzeQualityButton = new Button(messages.getString("button.analyzeQuality"));
-        analyzeQualityButton.setId("analyzeQualityButton"); // Set ID
+        analyzeQualityButton.setId("analyzeQualityButton");
         exportReportButton = new Button(messages.getString("button.exportReport"));
         exportReportButton.setId("exportReportButton");
 
         HBox qualityOperationsBox = new HBox(10, analyzeQualityButton, exportReportButton);
         qualityOperationsBox.setPadding(new Insets(10,0,10,0));
 
-        // User stories selection
+        // User story selection with multi-select capability for targeted analysis
         userStoriesLabel = new Label(messages.getString("label.selectedStories"));
         userStoriesListView = new ListView<>();
-        userStoriesListView.setId("userStoriesListView"); // Set ID
+        userStoriesListView.setId("userStoriesListView");
         userStoriesListView.setPrefHeight(150);
         userStoriesListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        userStoriesListView.setCellFactory(listView -> new ListCell<UserStory>() {
+        userStoriesListView.setCellFactory(_ -> new ListCell<UserStory>() {
             @Override
             protected void updateItem(UserStory item, boolean empty) {
                 super.updateItem(item, empty);
@@ -299,10 +383,8 @@ public class UserStoryApp extends Application {
             }
         });
 
-        // Quality criteria selection with checkboxes
+        // Quality criteria selection - dynamically populated from QualityAnalysisManager
         criteriaLabel = new Label(messages.getString("label.qualityCriteria"));
-        // qualityCriteriaBox = new VBox(5); // Moved to start()
-        // qualityCriteriaBox.setId("qualityCriteriaBox"); // Moved to start()
         qualityCriteriaBox.setPrefHeight(150);
         qualityCriteriaBox.setStyle("-fx-border-color: #CCCCCC; -fx-border-width: 1; -fx-padding: 5;");
         
@@ -315,13 +397,13 @@ public class UserStoryApp extends Application {
         Button clearAllCriteriaButton = new Button("Clear All");
         clearAllCriteriaButton.setId("clearAllCriteriaButton"); // Set ID
         
-        selectAllCriteriaButton.setOnAction(e -> {
+        selectAllCriteriaButton.setOnAction(_ -> {
             for (CheckBox checkBox : criteriaCheckBoxes) {
                 checkBox.setSelected(true);
             }
         });
         
-        clearAllCriteriaButton.setOnAction(e -> {
+        clearAllCriteriaButton.setOnAction(_ -> {
             for (CheckBox checkBox : criteriaCheckBoxes) {
                 checkBox.setSelected(false);
             }
@@ -331,7 +413,9 @@ public class UserStoryApp extends Application {
 
         // Quality results
         qualityResultsLabel = new Label(messages.getString("label.qualityResults"));
-        qualityResultsArea = new TextArea();
+        // Don't re-initialize qualityResultsArea - it's already initialized in start() method
+        // qualityResultsArea = new TextArea(); // Re-initialized here
+        qualityResultsArea.setId("qualityResultsArea"); // Set ID to ensure it's always available for tests
         qualityResultsArea.setEditable(false);
         qualityResultsArea.setPromptText(messages.getString("prompt.qualityResultsArea"));
         qualityResultsArea.setPrefHeight(200);
@@ -409,7 +493,8 @@ public class UserStoryApp extends Application {
             return;
         }
 
-        org.graphstream.graph.Graph gsGraph = new org.graphstream.graph.implementations.SingleGraph("storyGraph-" + pid + System.currentTimeMillis(), false, true); // Added timestamp for uniqueness
+        // Create GraphStream graph with unique identifier to prevent naming conflicts
+        org.graphstream.graph.Graph gsGraph = new org.graphstream.graph.implementations.SingleGraph("storyGraph-" + pid + System.currentTimeMillis(), false, true);
         System.setProperty("org.graphstream.ui", "javafx");
 
         String stylesheet = 
@@ -519,8 +604,79 @@ public class UserStoryApp extends Application {
     }
 
     // New overloaded method for testing
-    public void loadFile(File selectedFile, String type) {
-        processLoadedFile(selectedFile, type);
+    public void loadFile(Stage primaryStage, String type, File file) {
+        if (file != null) {
+            currentFileName = file.getName().replaceFirst("[.][^.] + $", ""); // Store filename without extension
+            if ("txt".equals(type)) {
+                try {
+                    List<String> lines = Files.readAllLines(file.toPath());
+                    currentUserStories.clear(); // Clear previous stories
+                    txtOutputArea.clear(); // Clear previous text
+                    jsonOutputArea.clear(); // Clear previous json
+                    warningsArea.clear(); // Clear previous warnings
+                    for (String line : lines) {
+                        UserStory story = manager.parseUserStoryFromText(line);
+                        if (story != null) {
+                            currentUserStories.add(story);
+                            txtOutputArea.appendText(story.getText() + "\n");
+                        }
+                    }
+                    // Convert to JSON and update JSON output area
+                    if (!currentUserStories.isEmpty()) {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+                        try {
+                            String jsonPreview = objectMapper.writeValueAsString(currentUserStories);
+                            jsonOutputArea.setText(jsonPreview);
+                        } catch (IOException e) {
+                            showError(messages.getString("error.convertingToJsonPreview") + ": " + e.getMessage());
+                        }
+                    }
+                    updateUserStoriesListView(); 
+                    updateGraphUserStoriesListView(); 
+                    showInfo(messages.getString("info.txtLoaded"));
+                } catch (IOException e) {
+                    showError(messages.getString("error.loadingTxt") + " " + e.getMessage());
+                }
+            } else if ("json".equals(type)) {
+                try {
+                    // Use the manager's readUserStories method to properly handle annotated JSON
+                    currentUserStories = manager.readUserStories(file.getAbsolutePath());
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    jsonOutputArea.setText(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(currentUserStories));
+                    txtOutputArea.clear(); // Clear txt area as we loaded JSON
+                    warningsArea.clear(); // Clear warnings
+                    for(UserStory story : currentUserStories) {
+                        txtOutputArea.appendText(story.getPid() + ": " + story.getText() + "\n");
+                        // No need to generate graphs here as readUserStories handles annotated JSON
+                    }
+                    updateUserStoriesListView(); 
+                    updateGraphUserStoriesListView(); 
+                    showInfo(messages.getString("info.jsonLoaded"));
+                } catch (IOException e) {
+                    showError(messages.getString("error.loadingJson") + " " + e.getMessage());
+                }
+            }
+            // Make graph visualization components visible if stories are loaded
+            boolean storiesExist = !currentUserStories.isEmpty();
+            boolean annotationGraphsExist = !manager.getAnnotationGraphs().isEmpty();
+            boolean showGraphComponents = storiesExist && (type.equals("txt") || annotationGraphsExist);
+            
+            // Debug output
+            System.out.println("DEBUG: storiesExist = " + storiesExist);
+            System.out.println("DEBUG: annotationGraphsExist = " + annotationGraphsExist);
+            System.out.println("DEBUG: showGraphComponents = " + showGraphComponents);
+            System.out.println("DEBUG: type = " + type);
+            System.out.println("DEBUG: annotationGraphs size = " + manager.getAnnotationGraphs().size());
+            
+            graphVisualizationLabel.setVisible(showGraphComponents);
+            graphUserStoriesLabel.setVisible(showGraphComponents);
+            graphUserStoriesListView.setVisible(showGraphComponents);
+            if (this.graphButtonBox != null) { // Ensure graphButtonBox is initialized
+                 this.graphButtonBox.setVisible(showGraphComponents);
+            }
+            graphVisualizationPane.setVisible(showGraphComponents); // New Pane
+        }
     }
 
     private void processLoadedFile(File selectedFile, String type) {
@@ -673,8 +829,7 @@ public class UserStoryApp extends Application {
     }
 
     private void saveJsonToFile(Stage ownerStage) {
-        String jsonContent = jsonOutputArea.getText();
-        if (jsonContent.isEmpty() || jsonContent.equals(messages.getString("prompt.jsonOutputArea"))) {
+        if (currentUserStories.isEmpty()) {
             showInfo(messages.getString("info.noJsonToSave"));
             return;
         }
@@ -687,12 +842,29 @@ public class UserStoryApp extends Application {
 
         if (file != null) {
             try {
-                ObjectMapper mapper = new ObjectMapper();
-                List<UserStory> storiesToSave = mapper.readValue(jsonContent, new TypeReference<List<UserStory>>() {});
-                manager.saveToJson(storiesToSave, file.getAbsolutePath());
-                showInfo(messages.getString("info.jsonSavedSuccessfully"));
+                // Use the manager's saveToJson method for clean JSON output without prefixes
+                manager.saveToJson(currentUserStories, file.getAbsolutePath());
+                showInfo(messages.getString("info.jsonSaved") + " " + file.getAbsolutePath());
             } catch (IOException e) {
-                showError(messages.getString("error.savingJsonFile") + ": " + e.getMessage());
+                showError(messages.getString("error.savingJson") + " " + e.getMessage());
+            }
+        }
+    }
+
+    // Overloaded method for testing: saveJsonToFile
+    public void saveJsonToFile(Stage primaryStage, File file) {
+        if (file != null) {
+            if (currentUserStories.isEmpty()) {
+                showInfo(messages.getString("info.noJsonToSave"));
+                return;
+            }
+            
+            try {
+                // Use the manager's saveToJson method for clean JSON output without prefixes
+                manager.saveToJson(currentUserStories, file.getAbsolutePath());
+                showInfo(messages.getString("info.jsonSaved") + " " + file.getAbsolutePath());
+            } catch (IOException e) {
+                showError(messages.getString("error.savingJson") + " " + e.getMessage());
             }
         }
     }
@@ -701,7 +873,10 @@ public class UserStoryApp extends Application {
         List<UserStory> selectedUserStories = new ArrayList<>(userStoriesListView.getSelectionModel().getSelectedItems());
 
         if (selectedUserStories.isEmpty()) {
-            showError("No user stories selected. Please select user stories first."); // showError is wrapped
+            showError(messages.getString("error.noUserStoriesSelected"));
+            javafx.application.Platform.runLater(() -> {
+                qualityResultsArea.setText(messages.getString("info.noAnalysisPerformed.noStories"));
+            });
             return;
         }
 
@@ -714,20 +889,44 @@ public class UserStoryApp extends Application {
         }
 
         if (selectedCriteria.isEmpty()) {
-            showError("No quality criteria selected. Please select at least one criterion."); // showError is wrapped
+            showError(messages.getString("error.noCriteriaSelected"));
+            javafx.application.Platform.runLater(() -> {
+                qualityResultsArea.setText(messages.getString("info.noAnalysisPerformed.noCriteria"));
+            });
             return;
         }
 
+        javafx.application.Platform.runLater(() -> {
+            qualityResultsArea.clear();
+        });
+
         try {
             lastAnalysisResult = qualityManager.analyzeQuality(selectedUserStories, selectedCriteria);
+
+            if (lastAnalysisResult == null) {
+                javafx.application.Platform.runLater(() -> {
+                    showError(messages.getString("error.analysisResultNull"));
+                    qualityResultsArea.setText(messages.getString("error.analysisResultNullEncountered"));
+                });
+                return; 
+            }
+
             String report = qualityManager.generateReport(lastAnalysisResult, currentFileName);
 
-            qualityResultsArea.clear();
-            qualityResultsArea.appendText(report);
-            
-            showInfo("Quality analysis completed. Found " + lastAnalysisResult.getTotalProblems() + " problems."); // showInfo is wrapped
+            javafx.application.Platform.runLater(() -> {
+                if (report != null && !report.isEmpty()) {
+                    qualityResultsArea.setText(report);
+                } else {
+                    qualityResultsArea.setText(messages.getString("info.analysisRanNoIssuesOrNoReport"));
+                }
+                showInfo(messages.getString("info.qualityAnalysisCompleted") + " " + lastAnalysisResult.getTotalProblems() + " " + messages.getString("info.problemsFound"));
+            });
+
         } catch (Exception e) {
-            showError("Error during quality analysis: " + e.getMessage()); // showError is wrapped
+            javafx.application.Platform.runLater(() -> {
+                showError(messages.getString("error.qualityAnalysisError") + ": " + e.getMessage());
+                qualityResultsArea.setText(messages.getString("error.qualityAnalysisErrorEncountered"));
+            });
         }
     }
     
@@ -752,12 +951,15 @@ public class UserStoryApp extends Application {
     }
 
     // New overloaded method for testing
-    public void exportQualityReport(File file) {
-        if (lastAnalysisResult == null) {
-            showInfo(messages.getString("info.noQualityResults")); // Consider if this should throw an error for tests
-            return;
+    public void exportQualityReport(Stage primaryStage, File file) {
+        if (file != null) {
+            if (lastAnalysisResult == null) {
+                showInfo(messages.getString("info.noQualityResults"));
+                return;
+            }
+            processExportQualityReport(file);
         }
-        processExportQualityReport(file);
+        // Optional: else block to handle null file if necessary for robustness, though test should provide a valid file.
     }
 
     private void processExportQualityReport(File file) {
@@ -776,7 +978,12 @@ public class UserStoryApp extends Application {
         }
     }
     
-    // Modified to accept Stage
+    /**
+     * Loads the resource bundle for the specified locale and updates UI components.
+     * Called when the application starts or when the user changes the language.
+     * @param stage The main application window to update
+     * @param locale The target locale for localization
+     */
     private void loadResourceBundle(Stage stage, Locale locale) {
         javafx.application.Platform.runLater(() -> {
             messages = ResourceBundle.getBundle("de.uni_marburg.sp25.messages", locale);
@@ -853,6 +1060,13 @@ public class UserStoryApp extends Application {
             }
             if (qualityResultsArea != null) {
                 qualityResultsArea.setPromptText(messages.getString("prompt.qualityResultsArea"));
+                qualityResultsArea.setId("qualityResultsArea"); // Ensure ID is set during UI update
+            }
+            if (graphVisualizationLabel != null) {
+                graphVisualizationLabel.setText(messages.getString("label.graphVisualization"));
+            }
+            if (graphUserStoriesLabel != null) {
+                graphUserStoriesLabel.setText(messages.getString("label.selectGraphStory"));
             }
             updateQualityCriteriaCheckBoxes(); 
         });
@@ -942,6 +1156,7 @@ public class UserStoryApp extends Application {
             }
             if (qualityResultsArea != null) {
                 qualityResultsArea.setPromptText(messages.getString("prompt.qualityResultsArea"));
+                qualityResultsArea.setId("qualityResultsArea"); // Ensure ID is set during UI update
             }
             
             // Update quality criteria checkboxes

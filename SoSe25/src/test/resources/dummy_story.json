@@ -1,0 +1,40 @@
+[
+  {
+    "PID": "US001",
+    "Text": "As a user, I want to register, so that I can create an account.",
+    "Persona": [
+      "user"
+    ],
+    "Action.Goal": [
+      "register"
+    ],
+    "Action.Benefit": [
+      "I"
+    ],
+    "Entity.Goal": [
+      "account"
+    ],
+    "Entity.Benefit": [
+      "create an account"
+    ],
+    "Benefit": "I can create an account",
+    "Triggers": [
+      [
+        "user",
+        "register"
+      ]
+    ],
+    "Targets": [
+      [
+        "register",
+        "account"
+      ]
+    ],
+    "Contains": [
+      [
+        "account",
+        "create an account"
+      ]
+    ]
+  }
+]
